@@ -1,12 +1,21 @@
-Validation performed for this build:
-- Python syntax compilation passed.
-- Existing owner authorization token signature verified against this build.
-- Existing extra owner code digest matched "tea".
-- 500 opening-hand simulations: rig mode strongly favored 10, 19, 20, and 21.
-- 10,000 dealer draw simulations with dealer showing a 10: target 20/21 draws
-  were about 37.3% with normal random draws and 3.0% with default rigging.
-- 100 trials at 100% dealer reduction avoided 20/21 when a safe card existed.
-- An old v4-style save migrated while preserving its balance.
+VALIDATION NOTES — MINI ARCADE HUB v10 ACCOUNTS, CLOUD SAVES, AND LEADERBOARD
 
-The Tkinter window and Windows DPAPI decryption still need to be exercised on
-an actual Windows PC; they cannot be fully tested in this Linux environment.
+Added:
+- Shared leaderboard tab with asynchronous refresh.
+- Top 100 ordering by fictional points, then total wins.
+- Leaderboard shows username, nickname, points, total wins, Blackjack wins, and mini-game wins.
+- Cloud save worker updates the authenticated player's own leaderboard row after save upload.
+- SQL creates leaderboard rows from the internal username Auth identity and backfills v9 accounts.
+- Authenticated players can read all leaderboard rows but can update only their own row.
+- The username field is not granted to client UPDATE privileges.
+
+Local tests to run:
+- Compile all Python modules.
+- Import app and leaderboard modules.
+- Test leaderboard payload aggregation and output bounds.
+- Test the cloud leaderboard query/update methods using a fake Supabase client.
+- Check ZIP archive integrity.
+
+Not tested against a live Supabase project because no project URL/key was supplied.
+Actual Tkinter UI and Windows launcher still need a smoke test on Windows.
+The leaderboard is intentionally player-reported; it is not a cheat-resistant or prize-eligible ranking.
