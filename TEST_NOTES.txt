@@ -1,0 +1,12 @@
+Validation performed for this build:
+- Python syntax compilation passed.
+- Existing owner authorization token signature verified against this build.
+- Existing extra owner code digest matched "tea".
+- 500 opening-hand simulations: rig mode strongly favored 10, 19, 20, and 21.
+- 10,000 dealer draw simulations with dealer showing a 10: target 20/21 draws
+  were about 37.3% with normal random draws and 3.0% with default rigging.
+- 100 trials at 100% dealer reduction avoided 20/21 when a safe card existed.
+- An old v4-style save migrated while preserving its balance.
+
+The Tkinter window and Windows DPAPI decryption still need to be exercised on
+an actual Windows PC; they cannot be fully tested in this Linux environment.
