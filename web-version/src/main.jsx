@@ -493,7 +493,7 @@ function App() {
               </article>
               <article className="card">
                 <h2>DAILY REWARD</h2>
-                <p>Collect 100 points once per local calendar day.</p>
+                <p>{`Collect ${formatPoints(profile.dailyReward)} points once per local calendar day.`}</p>
                 <button
                   className="profile-action-button"
                   type="button"
@@ -539,21 +539,21 @@ function App() {
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
-            <NumberHuntGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+            <NumberHuntGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} rewardAmount={profile.numberReward} />
           )}
         </div>
         <div hidden={active !== "Rock Paper Scissors"}>
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
-            <RockPaperScissorsGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+            <RockPaperScissorsGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} rewardAmount={profile.rpsReward} />
           )}
         </div>
         <div hidden={active !== "Trivia"}>
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
-            <TriviaGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+            <TriviaGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} rewardPerCorrect={profile.triviaReward} />
           )}
         </div>
 
@@ -593,6 +593,8 @@ function App() {
               {statCard("RPS WINS", formatPoints(stats.rpsWins), `${stats.rpsGames} games · ${stats.rpsTies} ties`)}
               {statCard("TRIVIA", formatPoints(stats.triviaCorrect), `Correct answers across ${stats.triviaGames} quizzes`)}
               {statCard("DAILY REWARDS", formatPoints(stats.dailyLogins), "Days claimed on this device")}
+              {statCard("DAILY BONUS", `${formatPoints(profile.dailyReward)} pts`, "Reward amount from your save")}
+              {statCard("GAME REWARDS", `${profile.numberReward} / ${profile.rpsReward} / ${profile.triviaReward}`, "Number Hunt / RPS / Trivia")}
             </div>
 
             <div className="profile-save-status" role="status" aria-live="polite">
