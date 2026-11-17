@@ -77,7 +77,7 @@ export default function BlackjackGame({ balance, freePlay = false, onSpendPoints
       else if (next.activeHand !== round.activeHand) setMessage("Hand " + (next.activeHand + 1) + " is now active.");
       else setMessage("Your turn. Choose your next move.");
     } catch (error) {
-      if (extraStake > 0 && !freePlay) onEarnPoints(extraStake);
+      if (extraStake > 0 && !freePlayMode) onEarnPoints(extraStake);
       setMessage(error instanceof Error ? error.message : "That move is unavailable.");
     }
   }
@@ -86,7 +86,7 @@ export default function BlackjackGame({ balance, freePlay = false, onSpendPoints
   const canSplit = Boolean(round?.phase === "playing" && !round.splitUsed && round.hands.length === 1 && activeHand.length === 2 && cardPoints(activeHand[0]) === cardPoints(activeHand[1]));
   const canDouble = Boolean(round?.phase === "playing" && activeHand.length === 2);
   const numericBet = Number(bet);
-  const canAffordBet = freePlay || (Number.isSafeInteger(numericBet) && numericBet >= 1 && numericBet <= balance);
+  const canAffordBet = freePlayMode || (Number.isSafeInteger(numericBet) && numericBet >= 1 && numericBet <= balance);
 
   return <section className="blackjack-page" aria-labelledby="blackjack-title">
     <div className="skill-game-heading">
