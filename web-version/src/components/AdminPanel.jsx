@@ -4,6 +4,8 @@ import {
   setAdminRole,
   suspendPlayer,
   unsuspendPlayer,
+  sendOnlinePrank,
+  PRANK_EVENT_TYPES,
 } from "../lib/admin.js";
 
 function formatTimestamp(value) {
@@ -19,7 +21,7 @@ function safeError(error) {
 }
 
 export default function AdminPanel({ client, role }) {
-  const [snapshot, setSnapshot] = React.useState({ roles: [], suspended: [], audit: [] });
+  const [snapshot, setSnapshot] = React.useState({ roles: [], suspended: [], audit: [], onlinePlayers: [] });
   const [status, setStatus] = React.useState("Loading protected admin information…");
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState(false);
@@ -28,6 +30,8 @@ export default function AdminPanel({ client, role }) {
   const [moderationReason, setModerationReason] = React.useState("");
   const [roleUsername, setRoleUsername] = React.useState("");
   const [roleAction, setRoleAction] = React.useState("admin");
+  const [selectedOnlinePlayer, setSelectedOnlinePlayer] = React.useState("");
+  const [selectedPrank, setSelectedPrank] = React.useState("confetti");
 
   React.useEffect(() => {
     let cancelled = false;
@@ -107,6 +111,29 @@ export default function AdminPanel({ client, role }) {
   }
 
   const isOwner = role === "owner";
+  const prankLabels = {
+    confetti: "Confetti celebration",
+    reality_glitch: "Reality glitch",
+    nickname_swap: "Temporary nickname mix-up",
+    fake_announcement: "Fake system announcement",
+    duck_invasion: "Duck invasion",
+    fortune: "Fortune message",
+    jumpscare: "Mild spooky surprise",
+  };
+
+  function submitPrank(event) {
+    event.preventDefault();
+    const player = snapshot.onlinePlayers.find((row) => row.userId === selectedOnlinePlayer);
+    if (!player) {
+      setStatus("Select a player who is currently online.");
+      return;
+    }
+
+    runAdminAction(
+      () => sendOnlinePrank(client, player.userId, selectedPrank),
+      `Sent ${prankLabels[selectedPrank] || "surprise"} to ${player.username}. The server enforces the online check and cooldown.`
+    );
+  }
 
   return (
     <section className="admin-page" aria-labelledby="admin-title">
@@ -166,6 +193,48 @@ export default function AdminPanel({ client, role }) {
             Suspensions do not delete accounts or reset saved progress. The permanent owner cannot be suspended.
             Only the owner can suspend another administrator.
           </p>
+        </section>
+
+        <section className="admin-card">
+          <h2>Online player surprises</h2>
+          <p>Send a temporary, harmless visual effect to a player whose signed-in session has checked in recently. The server enforces permissions and cooldowns.</p>
+          <form className="admin-form" onSubmit={submitPrank}>
+            <label htmlFor="admin-online-player">Online player</label>
+            <select
+              id="admin-online-player"
+              value={selectedOnlinePlayer}
+              onChange={(event) => setSelectedOnlinePlayer(event.target.value)}
+              required
+            >
+              <option value="">Choose a player…</option>
+              {snapshot.onlinePlayers.map((row) => (
+                <option key={row.userId} value={row.userId}>
+                  {row.username} · seen {formatTimestamp(row.lastSeenAt)}
+                </option>
+              ))}
+            </select>
+            <label htmlFor="admin-prank-type">Surprise type</label>
+            <select
+              id="admin-prank-type"
+              value={selectedPrank}
+              onChange={(event) => setSelectedPrank(event.target.value)}
+            >
+              {PRANK_EVENT_TYPES.map((eventType) => (
+                <option value={eventType} key={eventType}>
+                  {prankLabels[eventType] || eventType}
+                </option>
+              ))}
+            </select>
+            <button className="admin-primary-button" type="submit" disabled={busy || !snapshot.onlinePlayers.length}>
+              {busy ? "Please wait…" : "Send surprise"}
+            </button>
+          </form>
+          <p className="admin-small-note">
+            Online presence refreshes approximately every 25 seconds. The receiving player can dismiss the effect, and it closes automatically after a short time.
+          </p>
+          {snapshot.onlinePlayers.length === 0 && (
+            <p className="admin-empty">No online players are currently available. Ask signed-in players to open the web game and refresh this list.</p>
+          )}
         </section>
 
         <section className="admin-card">
