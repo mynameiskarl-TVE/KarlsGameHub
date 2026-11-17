@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import AuthPanel from "./components/AuthPanel.jsx";
+import AudioSettingsPanel from "./components/AudioSettingsPanel.jsx";
 import PrankOverlay from "./components/PrankOverlay.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
 import NumberHuntGame from "./components/NumberHuntGame.jsx";
@@ -45,6 +46,7 @@ const tabs = [
   "Trivia",
   "Profile & stats",
   "Leaderboard",
+  "Settings",
   "Account",
 ];
 
@@ -920,6 +922,10 @@ function App() {
         {active === "Admin" && isAdminForCurrentUser && (
           <AdminPanel client={supabaseClient} role={adminRole} />
         )}
+
+        <div hidden={active !== "Settings"}>
+          <AudioSettingsPanel />
+        </div>
 
         {active === "Account" && (
           <AuthPanel
