@@ -549,14 +549,14 @@ function App() {
         </div>
         <div hidden={active !== "Rock Paper Scissors"}>
           {isCloudLoading ? (
-            <div className="cloud-loading-screen" role="status">Loading your account save. Games will be ready in a moment…</div>
+            <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
             <RockPaperScissorsGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
           )}
         </div>
         <div hidden={active !== "Trivia"}>
           {isCloudLoading ? (
-            <div className="cloud-loading-screen" role="status">Loading your account save. Games will be ready in a moment…</div>
+            <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
             <TriviaGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
           )}
