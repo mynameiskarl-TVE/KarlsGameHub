@@ -32,8 +32,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if public.mini_arcade_admin_check() is distinct from 'owner' then
-    raise exception 'Only the permanent owner can manage tester access';
+  if coalesce(public.mini_arcade_admin_check(), '') not in ('owner', 'admin') then
+    raise exception 'Administrator permission required';
   end if;
   return query
   select l.username, t.created_at
