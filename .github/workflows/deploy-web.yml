@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         working-directory: web-version
         run: npm install
+      - name: Test game logic
+        working-directory: web-version
+        run: npm test
       - name: Build website
         working-directory: web-version
         run: npm run build
