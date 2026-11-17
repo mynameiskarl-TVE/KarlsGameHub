@@ -7,6 +7,9 @@ import AdminPanel from "./components/AdminPanel.jsx";
 import NumberHuntGame from "./components/NumberHuntGame.jsx";
 import RockPaperScissorsGame from "./components/RockPaperScissorsGame.jsx";
 import TriviaGame from "./components/TriviaGame.jsx";
+import BlackjackGame from "./components/BlackjackGame.jsx";
+import SlotMachineGame from "./components/SlotMachineGame.jsx";
+import CoinFlipGame from "./components/CoinFlipGame.jsx";
 import MemoryMatchGame from "./components/MemoryMatchGame.jsx";
 import PatternRecallGame from "./components/PatternRecallGame.jsx";
 import {
@@ -551,7 +554,8 @@ function App() {
     });
   }, [today, profile.lastDailyReward]);
   const totalGamesPlayed =
-    stats.numberHuntGames + stats.rpsGames + stats.triviaGames + stats.memoryGames + stats.patternGames;
+    stats.blackjackGames + stats.coinFlips + stats.slotSpins + stats.numberHuntGames +
+    stats.rpsGames + stats.triviaGames + stats.memoryGames + stats.patternGames;
 
   function awardPoints(amount) {
     if (!Number.isSafeInteger(amount) || amount <= 0) return;
@@ -588,6 +592,17 @@ function App() {
       } else if (result.game === "pattern") {
         increment("patternGames");
         if (result.outcome === "win") increment("patternWins");
+      } else if (result.game === "blackjack") {
+        increment("blackjackGames");
+        increment("blackjackWins", Number.isSafeInteger(result.wins) ? Math.min(10, result.wins) : 0);
+        increment("blackjackLosses", Number.isSafeInteger(result.losses) ? Math.min(10, result.losses) : 0);
+        increment("blackjackPushes", Number.isSafeInteger(result.pushes) ? Math.min(10, result.pushes) : 0);
+      } else if (result.game === "slots") {
+        increment("slotSpins");
+        if (result.outcome === "jackpot") increment("slotWins");
+      } else if (result.game === "coinFlip") {
+        increment("coinFlips");
+        if (result.outcome === "win") increment("coinFlipWins");
       } else {
         return current;
       }
@@ -670,7 +685,7 @@ function App() {
     adminVerifiedForUser === session.user.id &&
     (adminRole === "owner" || adminRole === "admin");
   const visibleTabs = tabs;
-  const primaryActiveTab = ["Number Hunt", "Rock Paper Scissors", "Trivia"].includes(active)
+  const primaryActiveTab = ["Number Hunt", "Rock Paper Scissors", "Trivia", "Memory Match", "Pattern Recall", "Coin Flip", "Slot Machine"].includes(active)
     ? "Arcade games"
     : active;
 
@@ -778,7 +793,8 @@ function App() {
                 <p>Your personal {session?.user ? "cloud-synced" : "guest"} progress.</p>
                 <ul className="arcade-summary-list">
                   <li>Blackjack wins: {formatPoints(stats.blackjackWins || 0)}</li>
-                  <li>Mini-game wins: {formatPoints(stats.numberHuntWins + stats.rpsWins)}</li>
+                  <li>Mini-game wins: {formatPoints(stats.numberHuntWins + stats.rpsWins + stats.memoryWins + stats.patternWins)}</li>
+                  <li>Slot machine jackpots: {formatPoints(stats.slotWins)}</li>
                   <li>Trivia answers correct: {formatPoints(stats.triviaCorrect)}</li>
                   <li>Daily logins: {formatPoints(stats.dailyLogins)}</li>
                 </ul>
@@ -790,6 +806,7 @@ function App() {
               <p>Pick a game and jump right in.</p>
               <div className="quick-launch-actions">
                 <button className="quick-launch-button quick-launch-primary" type="button" onClick={() => setActive("Blackjack")}>Blackjack</button>
+                <button className="quick-launch-button" type="button" onClick={() => setActive("Slot Machine")}>Slot Machine</button>
                 <button className="quick-launch-button" type="button" onClick={() => setActive("Arcade games")}>Mini-games</button>
                 <button className="quick-launch-button" type="button" onClick={() => setActive("Profile & stats")}>Profile &amp; stats</button>
                 <button className="quick-launch-button" type="button" onClick={() => setActive("Leaderboard")}>Leaderboard</button>
@@ -811,15 +828,7 @@ function App() {
         )}
 
         {active === "Blackjack" && (
-          <section className="blackjack-coming-soon" aria-labelledby="blackjack-title">
-            <h1 id="blackjack-title">Blackjack</h1>
-            <p className="muted">The Blackjack page is reserved for the next migration stage.</p>
-            <div className="classic-panel">
-              <h2>BLACKJACK</h2>
-              <p>The original desktop game is being used as the reference so the web version can keep its familiar layout and controls.</p>
-              <p>Your local profile, account, and other arcade pages remain available while this page is prepared.</p>
-            </div>
-          </section>
+          <BlackjackGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
         )}
 
         {active === "Arcade games" && (
@@ -832,6 +841,8 @@ function App() {
               {gameCard("Quick Trivia", "Answer five randomly selected questions", "Trivia")}
               {gameCard("Memory Match", "Find all matching pairs", "Memory Match")}
               {gameCard("Pattern Recall", "Remember and repeat the sequence", "Pattern Recall")}
+              {gameCard("Coin Flip", "Call Heads or Tails", "Coin Flip")}
+              {gameCard("Slot Machine", "Spin the classic three reels for free", "Slot Machine")}
             </div>
           </>
         )}
@@ -868,6 +879,14 @@ function App() {
         <div hidden={active !== "Pattern Recall"}>
           {active === "Pattern Recall" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
           <PatternRecallGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+        </div>
+        <div hidden={active !== "Coin Flip"}>
+          {active === "Coin Flip" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
+          <CoinFlipGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+        </div>
+        <div hidden={active !== "Slot Machine"}>
+          {active === "Slot Machine" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
+          <SlotMachineGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
         </div>
 
         {active === "Profile & stats" && (
@@ -907,6 +926,9 @@ function App() {
               {statCard("TRIVIA", formatPoints(stats.triviaCorrect), `Correct answers across ${stats.triviaGames} quizzes`)}
               {statCard("MEMORY MATCH", formatPoints(stats.memoryWins), `Wins across ${stats.memoryGames} rounds`)}
               {statCard("PATTERN RECALL", formatPoints(stats.patternWins), `Wins across ${stats.patternGames} rounds`)}
+              {statCard("BLACKJACK", formatPoints(stats.blackjackWins), `${stats.blackjackGames} rounds · ${stats.blackjackLosses} losses`)}
+              {statCard("SLOT MACHINE", formatPoints(stats.slotWins), `${stats.slotSpins} free spins`)}
+              {statCard("COIN FLIP", formatPoints(stats.coinFlipWins), `${stats.coinFlips} flips`)}
               {statCard("DAILY REWARDS", formatPoints(stats.dailyLogins), "Days claimed on this device")}
               {statCard("DAILY BONUS", `${formatPoints(profile.dailyReward)} pts`, "Reward amount from your save")}
               {statCard("GAME REWARDS", `${profile.numberReward} / ${profile.rpsReward} / ${profile.triviaReward}`, "Number Hunt / RPS / Trivia")}
@@ -991,8 +1013,7 @@ function App() {
                   </div>
                 )}
                 <p className="leaderboard-disclaimer">
-                  Points and Trivia results are currently player-reported through game saves, not independently verified by a server-side scoring system.
-                  They are suitable for casual standings, not a cheat-proof competition.
+                  Leaderboard score fields are protected from direct browser updates. Personal progress is saved to your account, but scores are not accepted as competitive rankings until server-verified scoring is added.
                 </p>
               </>
             )}
