@@ -18,9 +18,13 @@ export function spinSlots(random = Math.random) {
   const allMatch = reels[0] === reels[1] && reels[1] === reels[2];
   const pair = !allMatch && (reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]);
   const reward = allMatch ? SLOT_REWARDS[reels[0]] : pair ? 5 : 0;
+  const payoutMultiplier = allMatch
+    ? ({ "7": 10, BAR: 5, "♦": 2, "♥": 1.5, "♣": 1.25, "♠": 1.25 }[reels[0]])
+    : pair ? 0.5 : 0;
   return {
     reels,
     outcome: allMatch ? "jackpot" : pair ? "pair" : "no-match",
     reward,
+    payoutMultiplier,
   };
 }
