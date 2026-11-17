@@ -17,7 +17,7 @@ class LeaderboardMixin:
                    bg="#142b26").pack(anchor="w")
         self.label(
             frame,
-            "Compare fictional point totals and game wins with your friends.",
+            "Historical player-reported totals. New score updates are paused until verified server scoring is available.",
             size=10, color="#c2d4c9", bg="#142b26",
         ).pack(anchor="w", pady=(3, 12))
 
@@ -58,8 +58,8 @@ class LeaderboardMixin:
 
         self.label(
             card,
-            "For fun only: points and wins are reported by the game running on each player's computer, "
-            "so this leaderboard is not cheat-proof.",
+            "Score totals are currently frozen. The server rejects direct client updates to points and wins; "
+            "older totals may reflect the previous player-reported system.",
             size=8, color="#9db6a9", bg="#203c34", wraplength=790, justify="left",
         ).pack(anchor="w", pady=(8, 0))
 
@@ -111,8 +111,8 @@ class LeaderboardMixin:
                         f"{mini_game_wins:,}"),
             )
         message = (
-            f"Showing {len(rows)} player(s). Standings are sorted by points."
-            if rows else "No players have synced a score yet. Play a game, then refresh."
+            f"Showing {len(rows)} historical row(s). Score submissions are paused."
+            if rows else "No historical leaderboard rows are available yet."
         )
         if self.is_suspended:
             message += " You are suspended, so you do not appear on it."
