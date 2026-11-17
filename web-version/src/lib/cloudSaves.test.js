@@ -99,7 +99,7 @@ test("rejects a cloud save larger than the database's 64 KiB limit before upload
   assert.equal(client.calls.some(call => call.method === "upsert"), false);
 });
 
-test("leaderboard sync updates only non-wagering fields on the authenticated player's own row", async () => {
+test("leaderboard sync updates only the authenticated player's nickname", async () => {
   const client = makeClient();
   const profile = {
     ...defaultProfile(),
@@ -116,8 +116,8 @@ test("leaderboard sync updates only non-wagering fields on the authenticated pla
   const update = client.calls.find(item => item.method === "update");
   assert.equal(update.table, "leaderboard");
   assert.equal(update.row.nickname, "HubPlayer");
-  assert.equal(update.row.points, 900);
-  assert.equal(update.row.trivia_correct, 15);
+  assert.equal("points" in update.row, false);
+  assert.equal("trivia_correct" in update.row, false);
   assert.equal("blackjack_wins" in update.row, false);
   assert.equal("mini_game_wins" in update.row, false);
   assert.equal("total_wins" in update.row, false);
