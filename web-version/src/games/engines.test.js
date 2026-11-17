@@ -24,15 +24,39 @@ test("Blackjack handles face cards and flexible aces", () => {
   ]), 21);
 });
 
-test("Blackjack deals from one 52-card deck without duplicate cards", () => {
+test("Blackjack deals from a six-deck shoe without duplicate physical cards", () => {
   const round = startBlackjackRound(() => 0.5);
   const cards = [
     ...round.deck,
     ...round.dealer,
     ...round.hands.flat(),
   ];
-  assert.equal(cards.length, 52);
-  assert.equal(new Set(cards.map((card) => card.rank + card.suit)).size, 52);
+  assert.equal(cards.length, 312);
+  assert.equal(new Set(cards.map((card) => card.deckNumber + card.rank + card.suit)).size, 312);
+});
+
+test("Blackjack dealer hits soft 17", () => {
+  const round = {
+    deck: [{ rank: "2", suit: "♣", deckNumber: 0 }],
+    hands: [[
+      { rank: "10", suit: "♠", deckNumber: 0 },
+      { rank: "8", suit: "♥", deckNumber: 0 },
+    ]],
+    dealer: [
+      { rank: "A", suit: "♦", deckNumber: 0 },
+      { rank: "6", suit: "♣", deckNumber: 0 },
+    ],
+    handStatus: ["playing"],
+    activeHand: 0,
+    splitUsed: false,
+    phase: "playing",
+    outcomes: [],
+    reward: 0,
+    result: null,
+  };
+  const next = standBlackjack(round);
+  assert.equal(handValue(next.dealer), 19);
+  assert.equal(next.dealer.length, 3);
 });
 
 test("Blackjack can split equal-value face and number cards", () => {
