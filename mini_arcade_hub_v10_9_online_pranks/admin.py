@@ -299,6 +299,7 @@ class AdminMixin:
                 debug_after_id = win.after(16, debug_tick)
 
             def toggle_debug_monitor():
+                nonlocal debug_last_tick, debug_sample_start, debug_tick_count, debug_max_delay
                 if debug_enabled.get():
                     stop_debug_monitor()
                     debug_enabled.set(False)
@@ -333,6 +334,8 @@ class AdminMixin:
             ).pack(anchor="w")
 
             def on_admin_tab_changed(_event=None):
+                nonlocal debug_after_id, debug_last_tick, debug_sample_start
+                nonlocal debug_tick_count, debug_max_delay
                 if not debug_enabled.get():
                     return
                 if notebook.select() == str(debug_tab):
