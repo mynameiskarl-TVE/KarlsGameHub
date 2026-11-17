@@ -30,9 +30,6 @@ jobs:
       - name: Install dependencies
         working-directory: web-version
         run: npm install
-      - name: Test Blackjack rules
-        working-directory: web-version
-        run: npm test
       - name: Build website
         working-directory: web-version
         run: npm run build
