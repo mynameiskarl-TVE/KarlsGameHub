@@ -2,43 +2,43 @@ import React from "react";
 
 const PRANK_PRESENTATIONS = {
   confetti: {
-    icon: "🎉",
+    tag: "CELEBRATION",
     label: "A little celebration",
     title: "Confetti time!",
     message: "A surprise burst of confetti just arrived. Your game is still right where you left it.",
   },
   reality_glitch: {
-    icon: "✨",
+    tag: "VISUAL EFFECT",
     label: "Visual surprise",
     title: "Did the screen just blink?",
     message: "Just a tiny arcade visual glitch. Everything is okay and your progress is unchanged.",
   },
   nickname_swap: {
-    icon: "🎭",
+    tag: "NAME MIX-UP",
     label: "Temporary name mix-up",
     title: "Name mix-up!",
     message: "For this pop-up only, your nickname has been temporarily mixed up. Your real profile name has not changed.",
   },
   fake_announcement: {
-    icon: "📣",
+    tag: "ANNOUNCEMENT",
     label: "Arcade announcement",
     title: "Official Mini Arcade announcement",
     message: "The management has announced that all ducks are now honorary arcade mascots. Carry on!",
   },
   duck_invasion: {
-    icon: "🦆",
+    tag: "DUCKS",
     label: "Duck visitor",
     title: "Duck invasion!",
     message: "A few friendly ducks have waddled onto the screen. They will be gone shortly.",
   },
   fortune: {
-    icon: "🔮",
+    tag: "FORTUNE",
     label: "A tiny fortune",
     title: "Your Mini Arcade fortune",
     message: "Small steps add up. Your next great idea might start with one little experiment.",
   },
   jumpscare: {
-    icon: "👻",
+    tag: "SPOOKY",
     label: "Mild spooky surprise",
     title: "BOO!",
     message: "Just a harmless Mini Arcade ghost popping in to say hello.",
@@ -100,14 +100,14 @@ export default function PrankOverlay({ event, onDismiss }) {
                 animationDelay: `${index * -0.8}s`,
               }}
             >
-              🦆
+              DUCK
             </span>
           ))}
         </div>
       )}
 
       <div className="prank-popup" role="status" aria-live="polite">
-        <div className="prank-popup-icon" aria-hidden="true">{presentation.icon}</div>
+        <div className="prank-popup-tag" aria-hidden="true">{presentation.tag}</div>
         <span className="eyebrow">{presentation.label}</span>
         <h2>{presentation.title}</h2>
         <p>{presentation.message}</p>
