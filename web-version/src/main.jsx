@@ -539,25 +539,25 @@ function App() {
 
         {/* Keep games mounted when switching tabs, so active rounds are preserved. */}
         <div hidden={active !== "Number Hunt"}>
-          <NumberHuntGame
-            balance={balance}
-            onEarnPoints={awardPoints}
-            onGameResult={recordGameResult}
-          />
+          {isCloudLoading ? (
+            <div className="cloud-loading-screen" role="status">Loading your account save. Games will be ready in a moment…</div>
+          ) : (
+            <NumberHuntGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          )}
         </div>
         <div hidden={active !== "Rock Paper Scissors"}>
-          <RockPaperScissorsGame
-            balance={balance}
-            onEarnPoints={awardPoints}
-            onGameResult={recordGameResult}
-          />
+          {isCloudLoading ? (
+            <div className="cloud-loading-screen" role="status">Loading your account save. Games will be ready in a moment…</div>
+          ) : (
+            <RockPaperScissorsGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          )}
         </div>
         <div hidden={active !== "Trivia"}>
-          <TriviaGame
-            balance={balance}
-            onEarnPoints={awardPoints}
-            onGameResult={recordGameResult}
-          />
+          {isCloudLoading ? (
+            <div className="cloud-loading-screen" role="status">Loading your account save. Games will be ready in a moment…</div>
+          ) : (
+            <TriviaGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          )}
         </div>
 
         {active === "Profile & stats" && (
