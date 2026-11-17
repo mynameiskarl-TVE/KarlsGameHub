@@ -4,6 +4,8 @@ import {
   normalizeAdminRole,
   fetchAdminRole,
   fetchAdminSnapshot,
+  fetchFreePlayAccess,
+  setFreePlayTester,
   setAdminRole,
   suspendPlayer,
   unsuspendPlayer,
@@ -77,10 +79,30 @@ test("admin snapshot reads protected server RPCs and returns safe fields for onl
   assert.equal("actor_user_id" in snapshot.audit[0], false);
   assert.deepEqual(client.calls.map((item) => item.name).sort(), [
     "mini_arcade_admin_audit_list",
+    "mini_arcade_admin_list_freeplay_testers",
     "mini_arcade_admin_list_roles",
     "mini_arcade_admin_list_suspended",
     "mini_arcade_admin_online_players",
   ]);
+});
+
+test("free-play access is read from the protected current-user RPC", async () => {
+  const client = mockClient({
+    mini_arcade_freeplay_check: { data: true, error: null },
+  });
+  assert.equal(await fetchFreePlayAccess(client), true);
+  assert.deepEqual(client.calls, [{ name: "mini_arcade_freeplay_check", args: {} }]);
+});
+
+test("tester access can only be changed through the owner-checked RPC", async () => {
+  const client = mockClient();
+  await setFreePlayTester(client, "Player_One", true);
+  assert.deepEqual(client.calls[0], {
+    name: "mini_arcade_admin_set_freeplay_tester",
+    args: { p_username: "player_one", p_enabled: true },
+  });
+  await assert.rejects(() => setFreePlayTester(client, "invalid name", true), /username/);
+  await assert.rejects(() => setFreePlayTester(client, "player_one", "yes"), /whether tester free play/);
 });
 
 test("role changes validate the username and role before RPC", async () => {
