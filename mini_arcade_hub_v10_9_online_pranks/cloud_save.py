@@ -40,41 +40,16 @@ def upload_player_save(client, user_id: str, save_data: dict[str, Any]):
     return response
 
 
-def leaderboard_payload(username: str, save_data: dict[str, Any]) -> dict[str, Any]:
-    """Build the small set of public, player-reported leaderboard fields."""
-    safe = deepcopy(save_data) if isinstance(save_data, dict) else {}
-
-    def number(key: str) -> int:
-        try:
-            return max(0, int(safe.get(key, 0)))
-        except (TypeError, ValueError):
-            return 0
-
-    blackjack_wins = number("blackjack_wins")
-    mini_game_wins = (
-        number("coin_flip_wins") + number("number_hunt_wins") + number("rps_wins") + number("slot_wins")
-    )
-    total_wins = blackjack_wins + mini_game_wins
-    nickname = str(safe.get("nickname") or username).strip()[:18] or username
-    return {
-        "nickname": nickname,
-        "points": min(1_000_000_000, number("balance")),
-        "total_wins": min(1_000_000_000, total_wins),
-        "blackjack_wins": min(1_000_000_000, blackjack_wins),
-        "mini_game_wins": min(1_000_000_000, mini_game_wins),
-        "trivia_correct": min(1_000_000_000, number("trivia_correct")),
-    }
-
-
 def sync_leaderboard_profile(client, user_id: str, username: str, save_data: dict[str, Any]):
-    """Update only the signed-in user's pre-created leaderboard row."""
+    """Update only the nickname; ranked score fields are server-owned."""
+    safe = save_data if isinstance(save_data, dict) else {}
+    nickname = str(safe.get("nickname") or username).strip()[:18] or username
     return (
         client.table("leaderboard")
-        .update(leaderboard_payload(username, save_data))
+        .update({"nickname": nickname})
         .eq("user_id", user_id)
         .execute()
     )
-
 
 def fetch_leaderboard(client, limit: int = 100):
     """Read the shared scoreboard. RLS restricts access to signed-in users."""
