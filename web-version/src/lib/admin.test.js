@@ -7,6 +7,11 @@ import {
   setAdminRole,
   suspendPlayer,
   unsuspendPlayer,
+  sendOnlinePrank,
+  registerPrankPresence,
+  pollPrankEvents,
+  leavePrankPresence,
+  PRANK_EVENT_TYPES,
 } from "./admin.js";
 
 function mockClient(results = {}) {
@@ -62,6 +67,7 @@ test("admin snapshot reads only the three protected server RPCs and returns safe
     "mini_arcade_admin_audit_list",
     "mini_arcade_admin_list_roles",
     "mini_arcade_admin_list_suspended",
+    "mini_arcade_admin_online_players",
   ]);
 });
 
@@ -97,4 +103,42 @@ test("unsuspension validates the username and calls the protected RPC", async ()
     name: "mini_arcade_admin_unsuspend_player",
     args: { p_username: "player_one" },
   });
+});
+
+test("sends a supported prank to a selected online player using the protected RPC", async () => {
+  const client = mockClient();
+  const target = "123e4567-e89b-12d3-a456-426614174000";
+  await sendOnlinePrank(client, target, "confetti");
+  assert.deepEqual(client.calls[0], {
+    name: "mini_arcade_admin_send_prank",
+    args: { p_target_user_id: target, p_event_type: "confetti" },
+  });
+  assert.ok(PRANK_EVENT_TYPES.includes("duck_invasion"));
+  await assert.rejects(() => sendOnlinePrank(client, "not-a-uuid", "confetti"), /online player/);
+  await assert.rejects(() => sendOnlinePrank(client, target, "unknown"), /supported prank/);
+});
+
+test("registers presence with the authenticated username and polls only supported events", async () => {
+  const client = mockClient({
+    mini_arcade_prank_poll: {
+      data: [
+        { event_id: 7, event_type: "duck_invasion", payload: {} },
+        { event_id: 8, event_type: "unrecognized", payload: {} },
+      ],
+      error: null,
+    },
+  });
+  await registerPrankPresence(client, "Player_One");
+  const events = await pollPrankEvents(client);
+  assert.deepEqual(events, [{ eventId: "7", eventType: "duck_invasion", payload: {} }]);
+  assert.deepEqual(client.calls.slice(0, 2), [
+    { name: "mini_arcade_prank_heartbeat", args: { p_username: "player_one" } },
+    { name: "mini_arcade_prank_poll", args: {} },
+  ]);
+});
+
+test("leaves online presence through the server RPC", async () => {
+  const client = mockClient();
+  await leavePrankPresence(client);
+  assert.deepEqual(client.calls, [{ name: "mini_arcade_prank_leave", args: {} }]);
 });
