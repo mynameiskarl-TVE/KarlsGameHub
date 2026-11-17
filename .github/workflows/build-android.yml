@@ -58,7 +58,7 @@ jobs:
 
       - name: Build Android debug APK
         working-directory: web-version/android
-        run: ./gradlew assembleDebug
+        run: chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Upload Android test APK
         uses: actions/upload-artifact@v4
