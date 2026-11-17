@@ -14,6 +14,7 @@ export default function AuthPanel({
   onSaveConfig,
   onSignOut,
   onRetryCloud,
+  onGuestMode,
 }) {
   const [mode, setMode] = React.useState("login");
   const [username, setUsername] = React.useState("");
@@ -60,8 +61,8 @@ export default function AuthPanel({
       const email = usernameToAuthEmail(normalizedUsername);
 
       if (mode === "register") {
-        if (password.length < 8) {
-          throw new Error("Your password must be at least 8 characters long.");
+        if (password.length < 12) {
+          throw new Error("New passwords must be at least 12 characters long.");
         }
 
         const { data, error } = await client.auth.signUp({
@@ -232,7 +233,7 @@ export default function AuthPanel({
                     id="auth-password"
                     type="password"
                     autoComplete={mode === "login" ? "current-password" : "new-password"}
-                    minLength={mode === "register" ? 8 : undefined}
+                    minLength={mode === "register" ? 12 : undefined}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required
@@ -242,7 +243,7 @@ export default function AuthPanel({
                   </button>
                 </form>
                 <p className="account-security-note">
-                  Usernames use 3–20 letters, numbers or underscores. New passwords must be at least 8 characters.
+                  Usernames use 3–20 letters, numbers or underscores. New passwords must be at least 12 characters.
                   This username-only setup does not have email-based password recovery.
                 </p>
               </div>
@@ -252,6 +253,14 @@ export default function AuthPanel({
 
         {message && <p className="account-message" role="status" aria-live="polite">{message}</p>}
       </div>
+      {!session?.user && onGuestMode && (
+        <div className="guest-mode-footer">
+          <span>Just looking around?</span>
+          <button type="button" className="guest-mode-button" onClick={onGuestMode}>
+            Continue as guest
+          </button>
+        </div>
+      )}
     </section>
   );
 }
