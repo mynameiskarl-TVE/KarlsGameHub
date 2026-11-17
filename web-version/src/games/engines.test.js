@@ -70,11 +70,17 @@ test("Blackjack stand settles an active round", () => {
   assert.ok(round.reward >= 0);
 });
 
-test("slot machine deterministic seven jackpot awards fixed free-play points", () => {
+test("slot machine deterministic seven jackpot returns the configured stake multiplier", () => {
   const result = spinSlots(() => 0);
   assert.deepEqual(result.reels, ["7", "7", "7"]);
   assert.equal(result.outcome, "jackpot");
+  assert.equal(result.payoutMultiplier, 10);
   assert.equal(result.reward, 100);
+});
+
+test("slot machine always returns a non-negative payout multiplier", () => {
+  const result = spinSlots(() => 0.999);
+  assert.ok(result.payoutMultiplier >= 0);
 });
 
 test("coin flip awards points only for a correct call", () => {
