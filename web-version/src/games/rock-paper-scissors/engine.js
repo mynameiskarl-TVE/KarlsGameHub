@@ -8,7 +8,15 @@ const BEATS = {
   Scissors: "Paper",
 };
 
-export function playRockPaperScissors(playerMove, computerMove) {
+export function playRockPaperScissors(
+  playerMove,
+  computerMove,
+  { winReward = RPS_WIN_REWARD, tieReward = RPS_TIE_REWARD } = {}
+) {
+  if (!Number.isSafeInteger(winReward) || winReward < 0 || winReward > 100_000 ||
+      !Number.isSafeInteger(tieReward) || tieReward < 0 || tieReward > 100_000) {
+    throw new RangeError("Reward values must be non-negative whole numbers.");
+  }
   if (!RPS_MOVES.includes(playerMove)) {
     throw new RangeError("Choose Rock, Paper, or Scissors.");
   }
@@ -21,10 +29,10 @@ export function playRockPaperScissors(playerMove, computerMove) {
 
   if (playerMove === computerMove) {
     outcome = "tie";
-    reward = RPS_TIE_REWARD;
+    reward = tieReward;
   } else if (BEATS[playerMove] === computerMove) {
     outcome = "win";
-    reward = RPS_WIN_REWARD;
+    reward = winReward;
   } else {
     outcome = "loss";
     reward = 0;
