@@ -39,7 +39,7 @@ export default function SlotMachineGame({ balance, freePlay = false, onSpendPoin
   }
 
   const numericBet = Number(bet);
-  const canAffordBet = freePlay || (Number.isSafeInteger(numericBet) && numericBet >= 1 && numericBet <= balance);
+  const canAffordBet = freePlayMode || (Number.isSafeInteger(numericBet) && numericBet >= 1 && numericBet <= balance);
 
   return <section className="slots-page" aria-labelledby="slots-title">
     <div className="skill-game-heading">
