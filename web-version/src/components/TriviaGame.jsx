@@ -7,7 +7,7 @@ import {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function TriviaGame({ balance, onEarnPoints, onGameResult, rewardPerCorrect = 5 }) {
+export default function TriviaGame({ balance, onSpendPoints, onEarnPoints, onGameResult, rewardPerCorrect = 5 }) {
   const [quiz, setQuiz] = React.useState(null);
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [message, setMessage] = React.useState("Start a quiz when you are ready.");
@@ -23,6 +23,7 @@ export default function TriviaGame({ balance, onEarnPoints, onGameResult, reward
 
     try {
       const next = answerTriviaQuestion(quiz, index);
+      if (!next.lastAnswer.correct && !onSpendPoints?.(2)) { setMessage("You need 2 points available to risk an incorrect answer."); return; }
       setQuiz(next);
       setShowFeedback(true);
 
@@ -114,7 +115,7 @@ export default function TriviaGame({ balance, onEarnPoints, onGameResult, reward
         )}
       </div>
 
-      <p className="trivia-balance-note">Current balance: {formatPoints(balance)} points. Incorrect answers never remove points.</p>
+      <p className="trivia-balance-note">Current balance: {formatPoints(balance)} points. Each incorrect answer costs 2 points.</p>
     </section>
   );
 }
