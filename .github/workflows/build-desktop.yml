@@ -1,0 +1,52 @@
+name: Build Mini Arcade Hub Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "desktop-windows-build"
+  cancel-in-progress: false
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Refresh dependency lockfile
+        working-directory: web-version
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Install dependencies
+        working-directory: web-version
+        run: npm ci
+
+      - name: Run automated tests
+        working-directory: web-version
+        run: npm test
+
+      - name: Build Windows x64 installer
+        working-directory: web-version
+        run: npm run desktop:build:win
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mini-Arcade-Hub-Windows-x64
+          path: |
+            web-version/release/*.exe
+            web-version/release/*.blockmap
+          if-no-files-found: error
+          retention-days: 14
