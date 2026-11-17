@@ -41,7 +41,7 @@ test("fetches admin role only through the server RPC", async () => {
   assert.deepEqual(client.calls, [{ name: "mini_arcade_admin_check", args: {} }]);
 });
 
-test("admin snapshot reads only the three protected server RPCs and returns safe fields", async () => {
+test("admin snapshot reads protected server RPCs and returns safe fields for online players", async () => {
   const client = mockClient({
     mini_arcade_admin_list_roles: {
       data: [{ username: "mynameiskarl", role: "owner", created_at: "2026-01-01", user_id: "private" }],
@@ -55,12 +55,24 @@ test("admin snapshot reads only the three protected server RPCs and returns safe
       data: [{ action: "suspend_player", target_username: "player_one", created_at: "2026-01-02", actor_user_id: "private" }],
       error: null,
     },
+    mini_arcade_admin_online_players: {
+      data: [{
+        user_id: "123e4567-e89b-12d3-a456-426614174000",
+        username: "player_two",
+        last_seen_at: "2026-01-02T10:00:00Z",
+        email: "private@example.invalid",
+      }],
+      error: null,
+    },
   });
 
   const snapshot = await fetchAdminSnapshot(client);
   assert.equal(snapshot.roles[0].role, "owner");
   assert.equal(snapshot.suspended[0].reason, "test");
   assert.equal(snapshot.audit[0].action, "suspend_player");
+  assert.equal(snapshot.onlinePlayers[0].username, "player_two");
+  assert.equal(snapshot.onlinePlayers[0].userId, "123e4567-e89b-12d3-a456-426614174000");
+  assert.equal("email" in snapshot.onlinePlayers[0], false);
   assert.equal("user_id" in snapshot.roles[0], false);
   assert.equal("actor_user_id" in snapshot.audit[0], false);
   assert.deepEqual(client.calls.map((item) => item.name).sort(), [
