@@ -50,14 +50,15 @@ export async function fetchAdminRole(client) {
 export async function fetchAdminSnapshot(client) {
   if (!client) throw new TypeError("A signed-in administrator is required.");
 
-  const [rolesResult, suspendedResult, auditResult, onlineResult] = await Promise.all([
+  const [rolesResult, suspendedResult, auditResult, onlineResult, freePlayResult] = await Promise.all([
     client.rpc("mini_arcade_admin_list_roles", {}),
     client.rpc("mini_arcade_admin_list_suspended", {}),
     client.rpc("mini_arcade_admin_audit_list", {}),
     client.rpc("mini_arcade_admin_online_players", {}),
+    client.rpc("mini_arcade_admin_list_freeplay_testers", {}),
   ]);
 
-  for (const result of [rolesResult, suspendedResult, auditResult, onlineResult]) {
+  for (const result of [rolesResult, suspendedResult, auditResult, onlineResult, freePlayResult]) {
     if (result.error) throw result.error;
   }
 
@@ -65,6 +66,10 @@ export async function fetchAdminSnapshot(client) {
     roles: cleanRows(rolesResult.data).map((row) => ({
       username: textField(row.username, 20),
       role: row.role === "owner" ? "owner" : row.role === "admin" ? "admin" : "unknown",
+      createdAt: textField(row.created_at, 40),
+    })),
+    freePlayTesters: cleanRows(freePlayResult.data).map((row) => ({
+      username: textField(row.username, 20),
       createdAt: textField(row.created_at, 40),
     })),
     suspended: cleanRows(suspendedResult.data).map((row) => ({
@@ -96,6 +101,24 @@ export async function setAdminRole(client, username, role) {
   const { error } = await client.rpc("mini_arcade_admin_set_role", {
     p_username: clean,
     p_role: role,
+  });
+  if (error) throw error;
+}
+
+export async function fetchFreePlayAccess(client) {
+  if (!client) return false;
+  const { data, error } = await client.rpc("mini_arcade_freeplay_check", {});
+  if (error) throw error;
+  return data === true;
+}
+
+export async function setFreePlayTester(client, username, enabled) {
+  if (!client) throw new TypeError("A signed-in owner is required.");
+  const clean = cleanUsername(username);
+  if (typeof enabled !== "boolean") throw new TypeError("Choose whether tester free play is enabled.");
+  const { error } = await client.rpc("mini_arcade_admin_set_freeplay_tester", {
+    p_username: clean,
+    p_enabled: enabled,
   });
   if (error) throw error;
 }
