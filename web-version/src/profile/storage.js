@@ -9,6 +9,14 @@ export const MAX_REWARD = 100_000;
 export const MAX_NICKNAME_LENGTH = 18;
 
 export const STAT_KEYS = [
+  "blackjackGames",
+  "blackjackWins",
+  "blackjackLosses",
+  "blackjackPushes",
+  "coinFlips",
+  "coinFlipWins",
+  "slotSpins",
+  "slotWins",
   "numberHuntGames",
   "numberHuntWins",
   "rpsGames",
