@@ -52,7 +52,13 @@ const accountStorageKey = (userId) => `${PROFILE_STORAGE_KEY}.account.${userId}`
 
 function readStoredSupabaseConfig() {
   try {
-    return loadSupabaseConfig(window.localStorage) || DEFAULT_SUPABASE_CONFIG;
+    const stored = loadSupabaseConfig(window.localStorage);
+    if (!stored) return DEFAULT_SUPABASE_CONFIG;
+
+    // Prefer the current publishable key if this device still has the project's old anon key.
+    const sameProject = stored.url === DEFAULT_SUPABASE_CONFIG.url;
+    const isModernKey = stored.publishableKey.startsWith("sb_publishable_");
+    return sameProject && !isModernKey ? DEFAULT_SUPABASE_CONFIG : stored;
   } catch {
     return DEFAULT_SUPABASE_CONFIG;
   }
@@ -683,7 +689,8 @@ function App() {
         >
           <span className="balance">{formatPoints(balance)} pts</span>
           <span className="profile-name">{session?.user ? "Signed in as " + signedInUsername : "Signed in as " + profile.nickname}</span>
-        </button>      </header>
+        </button>
+      </header>
 
       <div className="announcement">
         Welcome to Mini Arcade! Have fun and enjoy the games.
@@ -696,7 +703,7 @@ function App() {
             type="button"
             className={primaryActiveTab === tab ? "tab active" : "tab"}
             onClick={() => setActive(tab)}
-            aria-current={active === tab ? "page" : undefined}
+            aria-current={primaryActiveTab === tab ? "page" : undefined}
           >
             {tab}
           </button>
