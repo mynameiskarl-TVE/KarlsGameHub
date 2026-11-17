@@ -9,11 +9,12 @@ const moveLabels = {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameResult, rewardAmount = 10 }) {
+export default function RockPaperScissorsGame({ balance, onSpendPoints, onEarnPoints, onGameResult, rewardAmount = 10 }) {
   const [lastRound, setLastRound] = React.useState(null);
   const [stats, setStats] = React.useState({ played: 0, wins: 0, ties: 0 });
 
   function play(move) {
+    if (balance < 4 || !onSpendPoints?.(4)) return;
     const computerMove = RPS_MOVES[Math.floor(Math.random() * RPS_MOVES.length)];
     const result = playRockPaperScissors(move, computerMove, { winReward: rewardAmount });
 
@@ -59,6 +60,7 @@ export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameRes
               type="button"
               key={move}
               onClick={() => play(move)}
+              disabled={balance < 4}
               aria-label={move}
             >
               <span className="rps-move-word" aria-hidden="true">{moveLabels[move]}</span>
@@ -84,7 +86,7 @@ export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameRes
       <div className="rps-rewards">
         <div><strong>Win</strong><span>+{formatPoints(rewardAmount)} points</span></div>
         <div><strong>Tie</strong><span>+2 points</span></div>
-        <div><strong>Loss</strong><span>No points lost</span></div>
+        <div><strong>Loss</strong><span>Lose 4-point stake</span></div>
       </div>
     </section>
   );
