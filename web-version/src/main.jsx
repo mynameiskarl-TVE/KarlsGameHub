@@ -38,6 +38,7 @@ import { getLegacyUsername, profileFromLegacySave } from "./profile/legacy.js";
 import { fetchLeaderboard } from "./lib/leaderboard.js";
 import {
   fetchAdminRole,
+  fetchFreePlayAccess,
   registerPrankPresence,
   pollPrankEvents,
   leavePrankPresence,
@@ -111,6 +112,8 @@ function App() {
   const [leaderboardStatus, setLeaderboardStatus] = React.useState("Sign in to view the leaderboard.");
   const [leaderboardRetry, setLeaderboardRetry] = React.useState(0);
   const [adminRole, setAdminRole] = React.useState(null);
+  const [freePlayAccess, setFreePlayAccess] = React.useState(false);
+  const [freePlayCheckedForUser, setFreePlayCheckedForUser] = React.useState("");
   const [adminVerifiedForUser, setAdminVerifiedForUser] = React.useState("");
   const [prankQueue, setPrankQueue] = React.useState([]);
 
@@ -169,12 +172,16 @@ function App() {
         setProfile(readProfileForKey(accountStorageKey(nextUserId)));
         setProfileLoadedForUser("");
         setModerationStatus({ checked: false, suspended: false, reason: "" });
+        setFreePlayAccess(false);
+        setFreePlayCheckedForUser("");
         cloudSaveBaseRef.current = {};
         setCloudStatus("Loading this account's cloud save…");
       } else if (!nextUserId && previousUserId) {
         setProfile(readProfileForKey(PROFILE_STORAGE_KEY));
         setProfileLoadedForUser("");
         setModerationStatus({ checked: false, suspended: false, reason: "" });
+        setFreePlayAccess(false);
+        setFreePlayCheckedForUser("");
         cloudSaveBaseRef.current = {};
         setCloudStatus("Signed out. Offline progress remains available.");
       }
@@ -436,6 +443,32 @@ function App() {
 
   React.useEffect(() => {
     const userId = session?.user?.id;
+    if (!supabaseClient || !userId || !authReady || !moderationStatus.checked || moderationStatus.suspended) {
+      setFreePlayAccess(false);
+      setFreePlayCheckedForUser(userId && moderationStatus.suspended ? userId : "");
+      return undefined;
+    }
+    let cancelled = false;
+    setFreePlayAccess(false);
+    setFreePlayCheckedForUser("");
+    fetchFreePlayAccess(supabaseClient)
+      .then((enabled) => {
+        if (!cancelled) {
+          setFreePlayAccess(enabled);
+          setFreePlayCheckedForUser(userId);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFreePlayAccess(false);
+          setFreePlayCheckedForUser(userId);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [supabaseClient, session?.user?.id, authReady, moderationStatus.checked, moderationStatus.suspended, cloudRetryNonce]);
+
+  React.useEffect(() => {
+    const userId = session?.user?.id;
 
     if (!supabaseClient || !userId || !authReady) {
       setAdminRole(null);
@@ -563,6 +596,15 @@ function App() {
       ...current,
       balance: Math.min(MAX_BALANCE, current.balance + amount),
     }));
+  }
+
+  function spendPoints(amount) {
+    if (!Number.isSafeInteger(amount) || amount <= 0 || balance < amount) return false;
+    setProfile((current) => {
+      if (current.balance < amount) return current;
+      return { ...current, balance: current.balance - amount };
+    });
+    return true;
   }
 
   function recordGameResult(result) {
@@ -830,7 +872,7 @@ function App() {
         {active === "Blackjack" && (
           isCloudLoading
             ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
-            : <BlackjackGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+            : <BlackjackGame balance={balance} freePlay={Boolean(session?.user?.id && freePlayCheckedForUser === session.user.id && freePlayAccess)} onSpendPoints={spendPoints} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
         )}
 
         {active === "Arcade games" && (
@@ -888,7 +930,7 @@ function App() {
         </div>
         <div hidden={active !== "Slot Machine"}>
           {active === "Slot Machine" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
-          {isCloudLoading ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div> : <SlotMachineGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />}
+          {isCloudLoading ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div> : <SlotMachineGame balance={balance} freePlay={Boolean(session?.user?.id && freePlayCheckedForUser === session.user.id && freePlayAccess)} onSpendPoints={spendPoints} onEarnPoints={awardPoints} onGameResult={recordGameResult} />}
         </div>
 
         {active === "Profile & stats" && (
