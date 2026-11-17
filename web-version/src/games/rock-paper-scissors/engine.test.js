@@ -28,6 +28,12 @@ test("wins award the original 10 points", () => {
   assert.equal(result.message.includes("+10"), true);
 });
 
+test("uses the configured win reward while keeping tie reward separate", () => {
+  assert.equal(playRockPaperScissors("Rock", "Scissors", { winReward: 25 }).reward, 25);
+  assert.equal(playRockPaperScissors("Rock", "Rock", { winReward: 25, tieReward: 4 }).reward, 4);
+  assert.throws(() => playRockPaperScissors("Rock", "Rock", { tieReward: -1 }), /Reward values/);
+});
+
 test("rejects unknown player or computer moves", () => {
   assert.throws(() => playRockPaperScissors("Lizard", "Rock"), /Choose Rock/);
   assert.throws(() => playRockPaperScissors("Rock", "Lizard"), /computer move is invalid/);
