@@ -1132,3 +1132,45 @@ footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 
 @media (prefers-reduced-motion: reduce) {
   .slot-reel.is-spinning, .coin-art.is-flipping { animation: none !important; }
 }
+
+
+/* Stake controls for the fictional arcade coin economy. */
+.arcade-bet-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px auto 18px;
+  padding: 12px 14px;
+  max-width: 520px;
+  border: 1px solid rgba(198, 173, 123, 0.34);
+  border-radius: 8px;
+  background: rgba(10, 25, 21, 0.42);
+}
+.arcade-bet-controls label {
+  color: var(--accent, #c6ad7b);
+  font-weight: 700;
+}
+.arcade-bet-controls input {
+  width: 120px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid rgba(198, 173, 123, 0.55);
+  border-radius: 5px;
+  background: #12231f;
+  color: #f0eadc;
+  font: inherit;
+}
+.arcade-bet-controls span {
+  color: #c6c0b3;
+  font-size: 0.88rem;
+}
+.tester-freeplay-note {
+  margin: 12px auto;
+  color: #d8c392;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-align: center;
+}
