@@ -300,11 +300,9 @@ class AdminMixin:
 
             def toggle_debug_monitor():
                 nonlocal debug_last_tick, debug_sample_start, debug_tick_count, debug_max_delay
-                if debug_enabled.get():
+                if not debug_enabled.get():
                     stop_debug_monitor()
-                    debug_enabled.set(False)
                 else:
-                    debug_enabled.set(True)
                     debug_last_tick = None
                     debug_sample_start = None
                     debug_tick_count = 0
