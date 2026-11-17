@@ -9,7 +9,7 @@ function makeSequence() {
   return sequence;
 }
 
-export default function PatternRecallGame({ balance, onEarnPoints, onGameResult }) {
+export default function PatternRecallGame({ balance, onSpendPoints, onEarnPoints, onGameResult }) {
   const [sequence, setSequence] = React.useState([]);
   const [phase, setPhase] = React.useState("ready");
   const [progress, setProgress] = React.useState(0);
@@ -21,6 +21,7 @@ export default function PatternRecallGame({ balance, onEarnPoints, onGameResult 
   }, []);
 
   function startRound() {
+    if (balance < 5 || !onSpendPoints?.(5)) { setMessage("You need 5 points to start a pattern challenge."); return; }
     if (startTimer.current) window.clearTimeout(startTimer.current);
     const next = makeSequence();
     setSequence(next);
@@ -72,7 +73,7 @@ export default function PatternRecallGame({ balance, onEarnPoints, onGameResult 
 
       <div className="skill-game-card">
         <h2>{phase === "complete" ? "Challenge complete" : phase === "failed" ? "Try again" : "Sequence challenge"}</h2>
-        <p>Complete the sequence to earn 20 local progress points.</p>
+        <p>Complete the sequence to earn 20 points. A failed challenge loses its 5-point entry fee.</p>
         <div className="pattern-display" aria-live="polite" aria-label={phase === "showing" ? "Memorize the displayed sequence" : "Sequence hidden"}>
           {visibleSequence}
         </div>
