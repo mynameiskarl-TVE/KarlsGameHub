@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import AuthPanel from "./components/AuthPanel.jsx";
+import PrankOverlay from "./components/PrankOverlay.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
 import NumberHuntGame from "./components/NumberHuntGame.jsx";
 import RockPaperScissorsGame from "./components/RockPaperScissorsGame.jsx";
@@ -28,7 +29,12 @@ import {
 } from "./lib/cloudSaves.js";
 import { getLegacyUsername, profileFromLegacySave } from "./profile/legacy.js";
 import { fetchLeaderboard } from "./lib/leaderboard.js";
-import { fetchAdminRole } from "./lib/admin.js";
+import {
+  fetchAdminRole,
+  registerPrankPresence,
+  pollPrankEvents,
+  leavePrankPresence,
+} from "./lib/admin.js";
 import "./style.css";
 
 const tabs = [
@@ -96,6 +102,7 @@ function App() {
   const [leaderboardRetry, setLeaderboardRetry] = React.useState(0);
   const [adminRole, setAdminRole] = React.useState(null);
   const [adminVerifiedForUser, setAdminVerifiedForUser] = React.useState("");
+  const [prankQueue, setPrankQueue] = React.useState([]);
 
   const sessionRef = React.useRef(null);
   const cloudSaveBaseRef = React.useRef({});
@@ -329,6 +336,95 @@ function App() {
 
   React.useEffect(() => {
     const userId = session?.user?.id;
+    const username = getLegacyUsername(session?.user);
+
+    if (
+      !supabaseClient ||
+      !userId ||
+      !authReady ||
+      !moderationStatus.checked ||
+      moderationStatus.suspended ||
+      profileLoadedForUser !== userId ||
+      !username
+    ) {
+      setPrankQueue([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let cycleBusy = false;
+    let lastHeartbeatAt = 0;
+    const seenEventIds = new Set();
+
+    async function runPrankCycle() {
+      if (cancelled || cycleBusy) return;
+      cycleBusy = true;
+
+      try {
+        const now = Date.now();
+        if (now - lastHeartbeatAt >= 25_000) {
+          try {
+            await registerPrankPresence(supabaseClient, username);
+            lastHeartbeatAt = Date.now();
+          } catch {
+            // The next cycle retries. Polling remains account-scoped by auth.uid().
+          }
+        }
+
+        if (document.visibilityState !== "hidden") {
+          try {
+            const events = await pollPrankEvents(supabaseClient);
+            if (!cancelled && events.length) {
+              const freshEvents = events.filter((event) => {
+                if (!event.eventId || seenEventIds.has(event.eventId)) return false;
+                seenEventIds.add(event.eventId);
+                return true;
+              });
+              if (freshEvents.length) {
+                setPrankQueue((current) => [...current, ...freshEvents].slice(0, 10));
+              }
+              if (seenEventIds.size > 100) {
+                const keep = [...seenEventIds].slice(-50);
+                seenEventIds.clear();
+                keep.forEach((id) => seenEventIds.add(id));
+              }
+            }
+          } catch {
+            // Prank polling is best-effort and never interrupts gameplay.
+          }
+        }
+      } finally {
+        cycleBusy = false;
+      }
+    }
+
+    // Delay the first poll slightly so development StrictMode's setup/cleanup
+    // cycle cannot claim and discard a one-time server-delivered event.
+    const initialTimer = window.setTimeout(runPrankCycle, 500);
+    const interval = window.setInterval(runPrankCycle, 3_000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") runPrankCycle();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(initialTimer);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [
+    supabaseClient,
+    session?.user?.id,
+    session?.user?.email,
+    authReady,
+    moderationStatus.checked,
+    moderationStatus.suspended,
+    profileLoadedForUser,
+  ]);
+
+  React.useEffect(() => {
+    const userId = session?.user?.id;
 
     if (!supabaseClient || !userId || !authReady) {
       setAdminRole(null);
@@ -510,12 +606,26 @@ function App() {
 
   async function signOut() {
     if (!supabaseClient) return;
+    try {
+      await leavePrankPresence(supabaseClient);
+    } catch {
+      // Presence expires automatically after the server's 90-second timeout.
+    }
+    setPrankQueue([]);
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
   }
 
   function retryCloudSync() {
     setCloudRetryNonce((value) => value + 1);
+  }
+
+  function dismissPrank(eventId) {
+    setPrankQueue((current) => {
+      if (!current.length) return current;
+      if (!eventId || current[0].eventId === eventId) return current.slice(1);
+      return current.filter((event) => event.eventId !== eventId);
+    });
   }
 
   function gameCard(title, description, icon, tab) {
@@ -828,6 +938,9 @@ function App() {
         <span>Mini Arcade Hub</span>
         <span>Web edition · Early development</span>
       </footer>
+      {prankQueue.length > 0 && (
+        <PrankOverlay event={prankQueue[0]} onDismiss={dismissPrank} />
+      )}
     </main>
   );
 }
