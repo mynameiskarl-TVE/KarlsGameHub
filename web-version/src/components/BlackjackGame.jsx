@@ -23,37 +23,34 @@ function calculatePayout(outcomes, stakes) {
 }
 
 export default function BlackjackGame({ balance, freePlay = false, onSpendPoints, onEarnPoints, onGameResult }) {
+  const [freePlayMode, setFreePlayMode] = React.useState(false);
   const [round, setRound] = React.useState(null);
-  const [message, setMessage] = React.useState(freePlay ? "Tester free play is enabled. Coins remain unchanged." : "Choose a stake and deal your first hand.");
+  const [message, setMessage] = React.useState("Choose a stake and deal your first hand.");
   const [roundNumber, setRoundNumber] = React.useState(0);
   const [bet, setBet] = React.useState("25");
   const [handStakes, setHandStakes] = React.useState([]);
 
-  React.useEffect(() => {
-    if (freePlay) setMessage("Tester free play is enabled. Coins remain unchanged.");
-  }, [freePlay]);
-
   function publishFinished(next, stakes) {
     if (next.phase !== "complete" || !next.result) return;
-    const payout = freePlay ? 0 : calculatePayout(next.outcomes, stakes);
+    const payout = freePlayMode ? 0 : calculatePayout(next.outcomes, stakes);
     if (payout > 0) onEarnPoints(payout);
     onGameResult?.({ game: "blackjack", wins: next.result.wins, losses: next.result.losses, pushes: next.result.pushes });
     const summary = next.outcomes.map((item, index) => "Hand " + (index + 1) + ": " + item.outcome).join(" · ");
-    setMessage(summary + (freePlay ? " — tester free play: balance unchanged." : payout ? " — returned " + formatPoints(payout) + " coins." : " — stake lost."));
+    setMessage(summary + (freePlayMode ? " — tester free play: balance unchanged." : payout ? " — returned " + formatPoints(payout) + " coins." : " — stake lost."));
   }
 
   function startRound() {
     const stake = Number(bet);
-    if (!freePlay && (!Number.isSafeInteger(stake) || stake < 1 || stake > balance)) {
+    if (!freePlayMode && (!Number.isSafeInteger(stake) || stake < 1 || stake > balance)) {
       setMessage("Choose a whole-number stake within your available coin balance.");
       return;
     }
-    if (!freePlay && !onSpendPoints?.(stake)) {
+    if (!freePlayMode && !onSpendPoints?.(stake)) {
       setMessage("You do not have enough coins for that stake.");
       return;
     }
     const next = startBlackjackRound();
-    const stakes = [freePlay ? 0 : stake];
+    const stakes = [freePlayMode ? 0 : stake];
     setRound(next);
     setHandStakes(stakes);
     setRoundNumber((value) => value + 1);
@@ -65,7 +62,7 @@ export default function BlackjackGame({ balance, freePlay = false, onSpendPoints
     if (!round || round.phase !== "playing") return;
     const index = round.activeHand;
     const extraStake = action === splitBlackjack ? (handStakes[0] || 0) : action === doubleBlackjack ? (handStakes[index] || 0) : 0;
-    if (extraStake > 0 && !freePlay && !onSpendPoints?.(extraStake)) {
+    if (extraStake > 0 && !freePlayMode && !onSpendPoints?.(extraStake)) {
       setMessage("You need " + formatPoints(extraStake) + " more coins to make that move.");
       return;
     }
@@ -98,12 +95,13 @@ export default function BlackjackGame({ balance, freePlay = false, onSpendPoints
     </div>
     <div className="blackjack-table">
       <div className="blackjack-table-title">MINI ARCADE CARD ROOM</div>
-      {!freePlay && (!round || round.phase === "complete") && <div className="arcade-bet-controls">
+      {freePlay && (!round || round.phase === "complete") && <label className="tester-freeplay-toggle"><input type="checkbox" checked={freePlayMode} onChange={(event) => setFreePlayMode(event.target.checked)} /> <span>Free play mode <small>No coins spent or awarded</small></span></label>}
+      {!freePlayMode && (!round || round.phase === "complete") && <div className="arcade-bet-controls">
         <label htmlFor="blackjack-bet">Stake per hand</label>
         <input id="blackjack-bet" type="number" min="1" max={balance} step="1" value={bet} onChange={(event) => setBet(event.target.value)} />
         <span>Available: {formatPoints(balance)} coins</span>
       </div>}
-      {freePlay && <p className="tester-freeplay-note">TESTER MODE · No coins are spent or awarded</p>}
+      {freePlayMode && <p className="tester-freeplay-note">TESTER MODE · No coins are spent or awarded</p>}
       <section className="blackjack-hand-area" aria-label="Dealer hand">
         <div className="blackjack-hand-heading"><strong>DEALER</strong><span>{round ? (round.phase === "playing" ? "Showing " + handValue(round.dealer.slice(0, 1)) : "Total " + handValue(round.dealer)) : "Waiting for deal"}</span></div>
         <div className="playing-cards">{round?.dealer.map((card, index) => <PlayingCard key={"dealer-" + index} card={card} hidden={round.phase === "playing" && index === 1} />)}{!round && <span className="blackjack-empty-hand">Cards will appear here.</span>}</div>
@@ -114,7 +112,7 @@ export default function BlackjackGame({ balance, freePlay = false, onSpendPoints
         {round?.hands.map((hand, index) => <div className={"blackjack-player-hand " + (round.phase === "playing" && round.activeHand === index ? "active" : "")} key={"player-" + index}>
           <div className="playing-cards">{hand.map((card, cardIndex) => <PlayingCard key={index + "-" + cardIndex} card={card} />)}<span className="blackjack-hand-total">{handValue(hand)}</span></div>
           <small>{round.handStatus[index] === "playing" ? "IN PLAY" : round.phase === "complete" ? round.outcomes[index]?.outcome?.toUpperCase() : round.handStatus[index]?.toUpperCase()}</small>
-          {!freePlay && <small>Stake: {formatPoints(handStakes[index] || 0)}</small>}
+          {!freePlayMode && <small>Stake: {formatPoints(handStakes[index] || 0)}</small>}
         </div>)}
         {!round && <span className="blackjack-empty-hand">Deal to start your round.</span>}
       </section>
@@ -123,11 +121,11 @@ export default function BlackjackGame({ balance, freePlay = false, onSpendPoints
         {!round || round.phase === "complete" ? <button className="arcade-primary-button" type="button" onClick={startRound} disabled={!canAffordBet}>{round ? "Deal again" : "Deal cards"}</button> : <>
           <button className="arcade-primary-button" type="button" onClick={() => perform(hitBlackjack)}>Hit</button>
           <button className="arcade-secondary-button" type="button" onClick={() => perform(standBlackjack)}>Stand</button>
-          <button className="arcade-secondary-button" type="button" onClick={() => perform(doubleBlackjack)} disabled={!canDouble || (!freePlay && balance < (handStakes[round.activeHand] || 0))}>Double</button>
-          <button className="arcade-secondary-button" type="button" onClick={() => perform(splitBlackjack)} disabled={!canSplit || (!freePlay && balance < (handStakes[0] || 0))}>Split</button>
+          <button className="arcade-secondary-button" type="button" onClick={() => perform(doubleBlackjack)} disabled={!canDouble || (!freePlayMode && balance < (handStakes[round.activeHand] || 0))}>Double</button>
+          <button className="arcade-secondary-button" type="button" onClick={() => perform(splitBlackjack)} disabled={!canSplit || (!freePlayMode && balance < (handStakes[0] || 0))}>Split</button>
         </>}
       </div>
-      <div className="blackjack-round-note">Round {roundNumber} · {freePlay ? "Tester free play" : "Stake-based play"}</div>
+      <div className="blackjack-round-note">Round {roundNumber} · {freePlayMode ? "Tester free play" : "Stake-based play"}</div>
     </div>
     <div className="blackjack-rules">
       <div><strong>Card values</strong><p>Number cards count as shown. Face cards count as 10. Aces count as 1 or 11.</p></div>
