@@ -34,23 +34,15 @@ export async function uploadPlayerCloudSave(client, userId, profile, existingSav
   return saveData;
 }
 
-function safeCounter(value) {
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed >= 0 ? Math.min(parsed, 1_000_000_000) : 0;
-}
-
 export async function syncPlayerLeaderboard(client, userId, profile) {
   if (!client || !userId) throw new TypeError("A signed-in player is required.");
 
-  // Only sync the non-wagering web game's public profile fields. Older
-  // win totals from retired desktop-only games remain untouched.
+  // Browser clients may edit only the display nickname.
+  // Score columns are server-owned and are never accepted from a client save.
+  const nickname = String(profile?.nickname || "Player").trim().slice(0, 18) || "Player";
   const { error } = await client
     .from("leaderboard")
-    .update({
-      nickname: profile.nickname,
-      points: safeCounter(profile.balance),
-      trivia_correct: safeCounter(profile.stats?.triviaCorrect),
-    })
+    .update({ nickname })
     .eq("user_id", userId);
 
   if (error) throw error;
