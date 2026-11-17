@@ -1174,3 +1174,30 @@ footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 
   letter-spacing: 0.09em;
   text-align: center;
 }
+
+
+/* Optional free-play switch, shown only to accounts granted tester access. */
+.tester-freeplay-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin: 14px auto;
+  padding: 9px 14px;
+  border: 1px solid rgba(198, 173, 123, 0.42);
+  border-radius: 6px;
+  background: rgba(10, 25, 21, 0.38);
+  color: #e5d4ad;
+  cursor: pointer;
+  font-weight: 700;
+}
+.tester-freeplay-toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: #bda36f;
+  cursor: pointer;
+}
+.tester-freeplay-toggle span { display: flex; flex-direction: column; gap: 2px; }
+.tester-freeplay-toggle small { color: #b8c9c1; font-size: 0.76rem; font-weight: 400; }
