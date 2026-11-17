@@ -2,6 +2,7 @@ import React from "react";
 import {
   startBlackjackRound,
   handValue,
+  cardPoints,
   hitBlackjack,
   standBlackjack,
   doubleBlackjack,
@@ -70,7 +71,7 @@ export default function BlackjackGame({ balance, onEarnPoints, onGameResult }) {
     !round.splitUsed &&
     round.hands.length === 1 &&
     activeHand.length === 2 &&
-    activeHand[0].rank === activeHand[1].rank
+    cardPoints(activeHand[0]) === cardPoints(activeHand[1])
   );
   const canDouble = Boolean(round?.phase === "playing" && activeHand.length === 2);
 
