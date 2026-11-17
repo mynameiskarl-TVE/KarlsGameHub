@@ -60,3 +60,15 @@ export async function syncPlayerLeaderboard(client, userId, profile, existingSav
 
   if (error) throw error;
 }
+
+export async function fetchPlayerModerationStatus(client) {
+  if (!client) throw new TypeError("A signed-in player is required.");
+  const { data, error } = await client.rpc("mini_arcade_my_status", {});
+  if (error) throw error;
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    suspended: Boolean(row?.is_suspended),
+    reason: typeof row?.reason === "string" ? row.reason.slice(0, 200) : "",
+  };
+}
