@@ -663,7 +663,6 @@ footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 
 .account-panel h2, .trivia-earned {
   color: var(--arcade-brass);
 }
-.brand { text-shadow: 0 0 12px rgba(198, 173, 123, .04); }
 .tab.active, .quick-launch-button.quick-launch-primary, .profile-action-button,
 .number-hunt-button, .trivia-primary, .account-primary-button,
 .leaderboard-status button, .admin-primary-button, .audio-primary-button {
@@ -835,7 +834,7 @@ footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 
 .blackjack-table {
   padding: clamp(16px, 4vw, 30px);
   border: 2px solid #507866;
-  background: radial-gradient(ellipse at center,  100%);
+  background: #1d5948;
   color: #f6f0dd;
   box-shadow: inset 0 0 0 7px rgba(7, 33, 25, .25), 0 10px 26px rgba(0,0,0,.18);
 }
