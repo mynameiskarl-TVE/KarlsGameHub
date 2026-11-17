@@ -18,14 +18,14 @@ export default function AuthPanel({
   const [mode, setMode] = React.useState("login");
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [projectUrl, setProjectUrl] = React.useState(config?.url || "");
+  const [projectUrl, setProjectUrl] = React.useState(config?.url || "https://rekltkovitixcqstvceo.supabase.co");
   const [publishableKey, setPublishableKey] = React.useState(config?.publishableKey || "");
   const [showConnectionForm, setShowConnectionForm] = React.useState(!client);
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState("");
 
   React.useEffect(() => {
-    setProjectUrl(config?.url || "");
+    setProjectUrl(config?.url || "https://rekltkovitixcqstvceo.supabase.co");
     setPublishableKey(config?.publishableKey || "");
     if (!client) setShowConnectionForm(true);
   }, [config?.url, config?.publishableKey, client]);
