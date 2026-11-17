@@ -151,13 +151,11 @@ class PrankEventsMixin:
 
 
     def _show_confetti_overlay(self):
-        """Play the supplied transparent GIF over the game window without pausing play."""
+        """Show a cached, pre-scaled transparent animation over the game window."""
         gif_path = resource_path("confetti_celebration.gif")
         if not gif_path.is_file():
             return False
 
-        # Windows supports a transparent color key for borderless Tk windows.
-        # On other platforms, fall back to the normal dismissible prank popup.
         if not hasattr(self, "_confetti_overlay") or self._confetti_overlay is None:
             overlay = tk.Toplevel(self.root)
             overlay.withdraw()
@@ -174,51 +172,58 @@ class PrankEventsMixin:
             canvas.pack(fill="both", expand=True)
             self._confetti_overlay = overlay
             self._confetti_canvas = canvas
+            self._confetti_canvas_item = None
         else:
             overlay = self._confetti_overlay
             canvas = self._confetti_canvas
 
-        # Stop an earlier animation cleanly if another confetti event arrives.
-        if getattr(self, "_confetti_after_id", None):
+        # Decode, downscale and create Tk images only once per app session.
+        # Replaying the prank simply reuses these cached PhotoImage objects.
+        if not getattr(self, "_confetti_photos", None):
             try:
-                self.root.after_cancel(self._confetti_after_id)
+                photos, durations = [], []
+                with Image.open(gif_path) as gif:
+                    for frame in ImageSequence.Iterator(gif):
+                        rgba = frame.convert("RGBA")
+                        rgba.thumbnail((480, 380), Image.Resampling.BILINEAR)
+                        photos.append(ImageTk.PhotoImage(rgba, master=self.root))
+                        durations.append(max(35, int(frame.info.get("duration", 70))))
+                if not photos:
+                    return False
+                self._confetti_photos = photos
+                self._confetti_durations = durations
+            except Exception:
+                self._confetti_photos = []
+                self._confetti_durations = []
+                return False
+
+        # Cancel any previous playback without decoding or rebuilding frames.
+        after_id = getattr(self, "_confetti_after_id", None)
+        if after_id:
+            try:
+                self.root.after_cancel(after_id)
             except tk.TclError:
                 pass
-            self._confetti_after_id = None
+        self._confetti_after_id = None
+        self._confetti_index = 0
 
         try:
-            frames = []
-            durations = []
-            with Image.open(gif_path) as gif:
-                for frame in ImageSequence.Iterator(gif):
-                    frames.append(frame.convert("RGBA"))
-                    durations.append(max(20, int(frame.info.get("duration", 70))))
-            if not frames:
-                return False
-        except Exception:
+            self._position_confetti_overlay()
+            overlay.deiconify()
+            overlay.lift()
+            overlay.attributes("-topmost", True)
+            self._animate_confetti_frame()
+            return True
+        except tk.TclError:
             return False
 
-        self._confetti_frames = frames
-        self._confetti_durations = durations
-        self._confetti_photo = None
-        self._confetti_index = 0
-        overlay.deiconify()
-        overlay.lift()
-        try:
-            overlay.attributes("-topmost", True)
-        except tk.TclError:
-            pass
-        self._position_confetti_overlay()
-        self._animate_confetti_frame()
-        return True
-
     def _position_confetti_overlay(self):
+        """Position once at playback start; do not force layout on every frame."""
         overlay = getattr(self, "_confetti_overlay", None)
         canvas = getattr(self, "_confetti_canvas", None)
         if not overlay or not canvas or not overlay.winfo_exists():
             return
         try:
-            self.root.update_idletasks()
             x, y = self.root.winfo_rootx(), self.root.winfo_rooty()
             width, height = max(1, self.root.winfo_width()), max(1, self.root.winfo_height())
             overlay.geometry(f"{width}x{height}+{x}+{y}")
@@ -230,23 +235,25 @@ class PrankEventsMixin:
         overlay = getattr(self, "_confetti_overlay", None)
         if not overlay or not overlay.winfo_exists():
             return
-        frames = getattr(self, "_confetti_frames", [])
-        if self._confetti_index >= len(frames):
+        photos = getattr(self, "_confetti_photos", [])
+        index = getattr(self, "_confetti_index", 0)
+        if index >= len(photos):
             overlay.withdraw()
             self._confetti_after_id = None
             return
         try:
-            self._position_confetti_overlay()
-            width = max(1, self.root.winfo_width())
-            height = max(1, self.root.winfo_height())
-            frame = frames[self._confetti_index].resize((width, height), Image.Resampling.LANCZOS)
-            self._confetti_photo = ImageTk.PhotoImage(frame)
-            self._confetti_canvas.delete("all")
-            self._confetti_canvas.create_image(0, 0, image=self._confetti_photo, anchor="nw")
-            delay = self._confetti_durations[self._confetti_index]
-            self._confetti_index += 1
+            photo = photos[index]
+            if self._confetti_canvas_item is None:
+                self._confetti_canvas_item = self._confetti_canvas.create_image(
+                    self._confetti_canvas.winfo_width() // 2,
+                    self._confetti_canvas.winfo_height() // 2,
+                    image=photo, anchor="center")
+            else:
+                self._confetti_canvas.itemconfigure(self._confetti_canvas_item, image=photo)
+            delay = self._confetti_durations[index]
+            self._confetti_index = index + 1
             self._confetti_after_id = self.root.after(delay, self._animate_confetti_frame)
-        except Exception:
+        except (tk.TclError, IndexError):
             try:
                 overlay.withdraw()
             except tk.TclError:
