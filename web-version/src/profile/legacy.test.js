@@ -20,6 +20,10 @@ test("converts an existing Python save into the browser profile", () => {
     trivia_games: 4,
     trivia_correct: 16,
     daily_logins: 7,
+    daily_reward: 125,
+    number_reward: 35,
+    rps_reward: 15,
+    trivia_reward: 8,
   });
   assert.equal(profile.balance, 740);
   assert.equal(profile.nickname, "ArcadePlayer");
@@ -32,6 +36,10 @@ test("converts an existing Python save into the browser profile", () => {
   assert.equal(profile.stats.triviaGames, 4);
   assert.equal(profile.stats.triviaCorrect, 16);
   assert.equal(profile.stats.dailyLogins, 7);
+  assert.equal(profile.dailyReward, 125);
+  assert.equal(profile.numberReward, 35);
+  assert.equal(profile.rpsReward, 15);
+  assert.equal(profile.triviaReward, 8);
 });
 
 test("can read camelCase web profiles as well as legacy snake_case saves", () => {
@@ -90,7 +98,10 @@ test("merges current profile fields without deleting unrelated legacy save field
   assert.equal(merged.announcement, "Welcome!");
   assert.equal(merged.blackjack_wins, 11);
   assert.equal(merged.slot_spins, 42);
-  assert.equal(merged.daily_reward, 125);
+  assert.equal(merged.daily_reward, 100);
+  assert.equal(merged.number_reward, 20);
+  assert.equal(merged.rps_reward, 10);
+  assert.equal(merged.trivia_reward, 5);
   assert.equal(merged.rigging_enabled, false);
 });
 
