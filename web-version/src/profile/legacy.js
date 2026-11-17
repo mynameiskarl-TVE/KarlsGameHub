@@ -93,6 +93,9 @@ export function mergeProfileIntoLegacySave(profile, existingSave = {}) {
   base.trivia_reward = clean.triviaReward;
 
   for (const [webKey, legacyKey] of Object.entries(FIELD_MAP)) {
+    // Preserve older desktop counters when a fresh/default web profile has not
+    // imported that counter yet. Non-zero current profile values still win.
+    if (clean.stats[webKey] === 0 && base[legacyKey] !== undefined) continue;
     base[legacyKey] = clean.stats[webKey];
   }
 
