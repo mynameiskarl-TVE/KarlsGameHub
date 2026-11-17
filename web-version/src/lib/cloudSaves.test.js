@@ -86,6 +86,20 @@ test("upserts the account save while preserving unrelated old Python fields", as
   assert.equal(merged.daily_reward, 100);
 });
 
+test("rejects a cloud save larger than the database's 64 KiB limit before upload", async () => {
+  const client = makeClient();
+  const oversized = {
+    ...defaultProfile(),
+    activity: ["x".repeat(66_000)],
+  };
+
+  await assert.rejects(
+    () => uploadPlayerCloudSave(client, "auth-user-id", oversized),
+    /save is too large/
+  );
+  assert.equal(client.calls.some(call => call.method === "upsert"), false);
+});
+
 test("leaderboard sync updates only non-wagering fields on the authenticated player's own row", async () => {
   const client = makeClient();
   const profile = {
