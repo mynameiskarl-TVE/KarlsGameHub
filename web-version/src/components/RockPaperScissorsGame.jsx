@@ -9,13 +9,13 @@ const icons = {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameResult }) {
+export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameResult, rewardAmount = 10 }) {
   const [lastRound, setLastRound] = React.useState(null);
   const [stats, setStats] = React.useState({ played: 0, wins: 0, ties: 0 });
 
   function play(move) {
     const computerMove = RPS_MOVES[Math.floor(Math.random() * RPS_MOVES.length)];
-    const result = playRockPaperScissors(move, computerMove);
+    const result = playRockPaperScissors(move, computerMove, { winReward: rewardAmount });
 
     setLastRound(result);
     setStats((current) => ({
@@ -82,7 +82,7 @@ export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameRes
       </div>
 
       <div className="rps-rewards">
-        <div><strong>Win</strong><span>+10 points</span></div>
+        <div><strong>Win</strong><span>+{formatPoints(rewardAmount)} points</span></div>
         <div><strong>Tie</strong><span>+2 points</span></div>
         <div><strong>Loss</strong><span>No points lost</span></div>
       </div>
