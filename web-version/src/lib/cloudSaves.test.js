@@ -86,7 +86,7 @@ test("upserts the account save while preserving unrelated old Python fields", as
   assert.equal(merged.daily_reward, 100);
 });
 
-test("leaderboard sync updates only the authenticated player's own row", async () => {
+test("leaderboard sync updates only non-wagering fields on the authenticated player's own row", async () => {
   const client = makeClient();
   const profile = {
     ...defaultProfile(),
@@ -104,10 +104,10 @@ test("leaderboard sync updates only the authenticated player's own row", async (
   assert.equal(update.table, "leaderboard");
   assert.equal(update.row.nickname, "HubPlayer");
   assert.equal(update.row.points, 900);
-  assert.equal(update.row.blackjack_wins, 5);
-  assert.equal(update.row.mini_game_wins, 15);
-  assert.equal(update.row.total_wins, 20);
   assert.equal(update.row.trivia_correct, 15);
+  assert.equal("blackjack_wins" in update.row, false);
+  assert.equal("mini_game_wins" in update.row, false);
+  assert.equal("total_wins" in update.row, false);
   assert.ok(client.calls.some(item => item.method === "eq" && item.column === "user_id" && item.value === "my-user-id"));
 });
 
