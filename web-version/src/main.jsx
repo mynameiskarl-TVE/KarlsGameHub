@@ -89,14 +89,9 @@ function App() {
     reason: "",
   });
 
-  const profileRef = React.useRef(profile);
   const sessionRef = React.useRef(null);
   const cloudSaveBaseRef = React.useRef({});
   const cloudSyncQueueRef = React.useRef(Promise.resolve());
-
-  React.useEffect(() => {
-    profileRef.current = profile;
-  }, [profile]);
 
   const activeProfileKey = session?.user?.id
     ? accountStorageKey(session.user.id)
