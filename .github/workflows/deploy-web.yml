@@ -30,6 +30,20 @@ jobs:
       - name: Install dependencies
         working-directory: web-version
         run: npm install
+      - name: Audit installed dependencies
+        working-directory: web-version
+        shell: bash
+        run: |
+          npm audit --json > npm-audit.json || true
+          node -e 'const a=require("./npm-audit.json"); const counts=a.metadata?.vulnerabilities || {}; console.log("NPM audit summary:", JSON.stringify(counts)); for (const [name,v] of Object.entries(a.vulnerabilities || {})) { console.log(JSON.stringify({name,severity:v.severity,isDirect:v.isDirect,range:v.range,fixAvailable:v.fixAvailable,advisories:(v.via || []).filter(x => typeof x === "object").map(x => ({title:x.title,url:x.url,range:x.range}))})); }'
+      - name: Upload generated dependency report and lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dependency-audit
+          path: |
+            web-version/package-lock.json
+            web-version/npm-audit.json
+          if-no-files-found: error
       - name: Test game logic
         working-directory: web-version
         run: npm test
