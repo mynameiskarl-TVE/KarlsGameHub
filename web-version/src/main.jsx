@@ -269,12 +269,17 @@ function App() {
     }
 
     let cancelled = false;
+    const profileSnapshot = profile;
+    const baseSnapshot =
+      cloudSaveBaseRef.current && typeof cloudSaveBaseRef.current === "object"
+        ? { ...cloudSaveBaseRef.current }
+        : {};
     const timer = window.setTimeout(() => {
       cloudSyncQueueRef.current = cloudSyncQueueRef.current
         .catch(() => undefined)
         .then(async () => {
           if (cancelled) return;
-          const latestProfile = profileRef.current;
+          const latestProfile = profileSnapshot;
           setCloudStatus("Saving your progress to Supabase…");
 
           try {
@@ -282,15 +287,17 @@ function App() {
               supabaseClient,
               userId,
               latestProfile,
-              cloudSaveBaseRef.current
+              baseSnapshot
             );
-            cloudSaveBaseRef.current = updatedBase;
+            if (sessionRef.current?.user?.id === userId) {
+              cloudSaveBaseRef.current = updatedBase;
+            }
 
             await syncPlayerLeaderboard(
               supabaseClient,
               userId,
               latestProfile,
-              cloudSaveBaseRef.current
+              updatedBase
             );
 
             if (!cancelled) {
