@@ -16,6 +16,10 @@ export const STAT_KEYS = [
   "rpsTies",
   "triviaGames",
   "triviaCorrect",
+  "memoryGames",
+  "memoryWins",
+  "patternGames",
+  "patternWins",
   "dailyLogins",
 ];
 
