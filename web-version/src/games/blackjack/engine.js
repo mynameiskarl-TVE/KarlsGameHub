@@ -27,9 +27,25 @@ export function handValue(hand) {
   return total;
 }
 
+const DECK_COUNT = 6;
+
 function makeDeck(random) {
-  const cards = CARD_SUITS.flatMap((suit) => CARD_RANKS.map((rank) => ({ rank, suit })));
+  // A six-deck shoe is a common casino format. deckNumber distinguishes
+  // identical rank/suit cards belonging to different physical decks.
+  const cards = Array.from({ length: DECK_COUNT }, (_, deckNumber) =>
+    CARD_SUITS.flatMap((suit) =>
+      CARD_RANKS.map((rank) => ({ rank, suit, deckNumber }))
+    )
+  ).flat();
   return shuffle(cards, random);
+}
+
+function isSoft17(hand) {
+  const lowTotal = hand.reduce(
+    (sum, card) => sum + (card.rank === "A" ? 1 : cardPoints(card)),
+    0
+  );
+  return handValue(hand) === 17 && hand.some((card) => card.rank === "A") && lowTotal + 10 === 17;
 }
 
 function draw(round) {
@@ -45,7 +61,9 @@ function isNatural(hand) {
 
 function settle(round) {
   const next = { ...round, phase: "complete", dealer: round.dealer.slice() };
-  while (handValue(next.dealer) < 17 && next.deck.length) {
+  // Dealer hits soft 17 (for example, Ace + 6), a common casino rule
+  // that gives the house a slightly higher edge than standing on soft 17.
+  while ((handValue(next.dealer) < 17 || isSoft17(next.dealer)) && next.deck.length) {
     const card = next.deck[next.deck.length - 1];
     next.deck = next.deck.slice(0, -1);
     next.dealer = next.dealer.concat(card);
