@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import AuthPanel from "./components/AuthPanel.jsx";
+import AdminPanel from "./components/AdminPanel.jsx";
 import NumberHuntGame from "./components/NumberHuntGame.jsx";
 import RockPaperScissorsGame from "./components/RockPaperScissorsGame.jsx";
 import TriviaGame from "./components/TriviaGame.jsx";
@@ -27,6 +28,7 @@ import {
 } from "./lib/cloudSaves.js";
 import { getLegacyUsername, profileFromLegacySave } from "./profile/legacy.js";
 import { fetchLeaderboard } from "./lib/leaderboard.js";
+import { fetchAdminRole } from "./lib/admin.js";
 import "./style.css";
 
 const tabs = [
@@ -92,6 +94,8 @@ function App() {
   const [leaderboardRows, setLeaderboardRows] = React.useState([]);
   const [leaderboardStatus, setLeaderboardStatus] = React.useState("Sign in to view the leaderboard.");
   const [leaderboardRetry, setLeaderboardRetry] = React.useState(0);
+  const [adminRole, setAdminRole] = React.useState(null);
+  const [adminVerifiedForUser, setAdminVerifiedForUser] = React.useState("");
 
   const sessionRef = React.useRef(null);
   const cloudSaveBaseRef = React.useRef({});
@@ -324,6 +328,54 @@ function App() {
   ]);
 
   React.useEffect(() => {
+    const userId = session?.user?.id;
+
+    if (!supabaseClient || !userId || !authReady) {
+      setAdminRole(null);
+      setAdminVerifiedForUser("");
+      return undefined;
+    }
+    if (!moderationStatus.checked) {
+      setAdminRole(null);
+      setAdminVerifiedForUser("");
+      return undefined;
+    }
+    if (moderationStatus.suspended) {
+      setAdminRole(null);
+      setAdminVerifiedForUser(userId);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setAdminRole(null);
+    setAdminVerifiedForUser("");
+
+    fetchAdminRole(supabaseClient)
+      .then((role) => {
+        if (cancelled) return;
+        setAdminRole(role);
+        setAdminVerifiedForUser(userId);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Fail closed: an unavailable role check never grants admin UI access.
+        setAdminRole(null);
+        setAdminVerifiedForUser(userId);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    supabaseClient,
+    session?.user?.id,
+    authReady,
+    moderationStatus.checked,
+    moderationStatus.suspended,
+    cloudRetryNonce,
+  ]);
+
+  React.useEffect(() => {
     if (active !== "Leaderboard") return undefined;
 
     if (!supabaseClient) {
@@ -492,6 +544,17 @@ function App() {
     (!authReady ||
       (Boolean(session?.user?.id) &&
         (profileLoadedForUser !== session.user.id || moderationStatus.suspended)));
+  const isAdminForCurrentUser =
+    Boolean(session?.user?.id) &&
+    adminVerifiedForUser === session.user.id &&
+    (adminRole === "owner" || adminRole === "admin");
+  const visibleTabs = isAdminForCurrentUser ? [...tabs, "Admin"] : tabs;
+
+  React.useEffect(() => {
+    if (active === "Admin" && !isAdminForCurrentUser) {
+      setActive("Home");
+    }
+  }, [active, isAdminForCurrentUser]);
 
   return (
     <main className="app-shell">
@@ -527,7 +590,7 @@ function App() {
       </div>
 
       <nav className="tabs" aria-label="Main navigation">
-        {tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -742,6 +805,10 @@ function App() {
               </>
             )}
           </section>
+        )}
+
+        {active === "Admin" && isAdminForCurrentUser && (
+          <AdminPanel client={supabaseClient} role={adminRole} />
         )}
 
         {active === "Account" && (
