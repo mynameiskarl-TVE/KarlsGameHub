@@ -828,7 +828,9 @@ function App() {
         )}
 
         {active === "Blackjack" && (
-          <BlackjackGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          isCloudLoading
+            ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
+            : <BlackjackGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
         )}
 
         {active === "Arcade games" && (
@@ -874,19 +876,19 @@ function App() {
         </div>
         <div hidden={active !== "Memory Match"}>
           {active === "Memory Match" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
-          <MemoryMatchGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          {isCloudLoading ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div> : <MemoryMatchGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />}
         </div>
         <div hidden={active !== "Pattern Recall"}>
           {active === "Pattern Recall" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
-          <PatternRecallGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          {isCloudLoading ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div> : <PatternRecallGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />}
         </div>
         <div hidden={active !== "Coin Flip"}>
           {active === "Coin Flip" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
-          <CoinFlipGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          {isCloudLoading ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div> : <CoinFlipGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />}
         </div>
         <div hidden={active !== "Slot Machine"}>
           {active === "Slot Machine" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
-          <SlotMachineGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+          {isCloudLoading ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div> : <SlotMachineGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />}
         </div>
 
         {active === "Profile & stats" && (
