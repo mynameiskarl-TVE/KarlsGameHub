@@ -78,9 +78,13 @@ test("slot machine deterministic seven jackpot returns the configured stake mult
   assert.equal(result.reward, 100);
 });
 
-test("slot machine always returns a non-negative payout multiplier", () => {
-  const result = spinSlots(() => 0.999);
-  assert.ok(result.payoutMultiplier >= 0);
+test("slot machine pays zero when all three symbols differ", () => {
+  const values = [0, 0.6, 0.2];
+  let index = 0;
+  const result = spinSlots(() => values[index++]);
+  assert.deepEqual(result.reels, ["7", "♣", "♦"]);
+  assert.equal(result.outcome, "no-match");
+  assert.equal(result.payoutMultiplier, 0);
 });
 
 test("coin flip awards points only for a correct call", () => {
