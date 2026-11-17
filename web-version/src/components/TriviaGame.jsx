@@ -7,13 +7,13 @@ import {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function TriviaGame({ balance, onEarnPoints, onGameResult }) {
+export default function TriviaGame({ balance, onEarnPoints, onGameResult, rewardPerCorrect = 5 }) {
   const [quiz, setQuiz] = React.useState(null);
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [message, setMessage] = React.useState("Start a quiz when you are ready.");
 
   function startQuiz() {
-    setQuiz(createTriviaQuiz());
+    setQuiz(createTriviaQuiz({ rewardPerCorrect }));
     setShowFeedback(false);
     setMessage("Answer five questions. You earn 5 points for each correct answer.");
   }
@@ -65,7 +65,7 @@ export default function TriviaGame({ balance, onEarnPoints, onGameResult }) {
           <>
             <div className="trivia-symbol" aria-hidden="true">?</div>
             <h2>Ready for a quick quiz?</h2>
-            <p className="trivia-copy">Answer five multiple-choice questions. Each correct answer earns 5 points, with a 10-point bonus for a perfect score.</p>
+            <p className="trivia-copy">Answer five multiple-choice questions. Each correct answer earns ${formatPoints(rewardPerCorrect)} points, with a 10-point bonus for a perfect score.</p>
             <button className="trivia-primary" type="button" onClick={startQuiz}>Start quiz</button>
           </>
         ) : quiz.active ? (
