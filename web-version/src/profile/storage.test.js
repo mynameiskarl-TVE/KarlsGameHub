@@ -27,6 +27,10 @@ test("creates a fresh profile with the original starting balance", () => {
   assert.equal(profile.nickname, "Player");
   assert.equal(profile.balance, STARTING_BALANCE);
   assert.deepEqual(profile.stats.numberHuntGames, 0);
+  assert.equal(profile.dailyReward, 100);
+  assert.equal(profile.numberReward, 20);
+  assert.equal(profile.rpsReward, 10);
+  assert.equal(profile.triviaReward, 5);
 });
 
 test("saves and loads a profile using the versioned storage key", () => {
@@ -49,6 +53,10 @@ test("sanitizes malformed values and limits nickname length", () => {
     nickname: "  ThisNicknameIsMuchTooLongForTheProfile  ",
     balance: -50,
     lastDailyReward: "not-a-date",
+    dailyReward: -2,
+    numberReward: 150000,
+    rpsReward: "bad",
+    triviaReward: 7,
     stats: { rpsWins: "-4", triviaGames: "8", surprise: 999 },
   });
   assert.equal(profile.nickname.length, 18);
@@ -56,6 +64,10 @@ test("sanitizes malformed values and limits nickname length", () => {
   assert.equal(profile.lastDailyReward, "");
   assert.equal(profile.stats.rpsWins, 0);
   assert.equal(profile.stats.triviaGames, 8);
+  assert.equal(profile.dailyReward, 100);
+  assert.equal(profile.numberReward, 100000);
+  assert.equal(profile.rpsReward, 10);
+  assert.equal(profile.triviaReward, 7);
   assert.equal("surprise" in profile.stats, false);
 });
 
@@ -71,6 +83,13 @@ test("daily reward is credited once per local calendar date", () => {
   assert.equal(second.claimed, false);
   assert.equal(second.reward, 0);
   assert.equal(second.profile.balance, first.profile.balance);
+});
+
+test("uses the reward amount saved in the player profile", () => {
+  const profile = { ...defaultProfile(), balance: 100, dailyReward: 175 };
+  const claim = claimDailyReward(profile, "2026-11-17");
+  assert.equal(claim.reward, 175);
+  assert.equal(claim.profile.balance, 275);
 });
 
 test("daily reward can be claimed on a later date", () => {
