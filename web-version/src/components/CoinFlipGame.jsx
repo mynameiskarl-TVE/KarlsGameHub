@@ -1,7 +1,7 @@
 import React from "react";
 import { flipCoin } from "../games/coin-flip/engine.js";
 
-export default function CoinFlipGame({ balance, onEarnPoints, onGameResult }) {
+export default function CoinFlipGame({ balance, onSpendPoints, onEarnPoints, onGameResult }) {
   const [guess, setGuess] = React.useState("Heads");
   const [last, setLast] = React.useState(null);
   const [flipping, setFlipping] = React.useState(false);
@@ -13,7 +13,7 @@ export default function CoinFlipGame({ balance, onEarnPoints, onGameResult }) {
   }, []);
 
   function play() {
-    if (flipping) return;
+    if (flipping || balance < 5 || !onSpendPoints?.(5)) return;
     setFlipping(true);
     setLast(null);
     timer.current = window.setTimeout(() => {
@@ -33,7 +33,7 @@ export default function CoinFlipGame({ balance, onEarnPoints, onGameResult }) {
         <div>
           <span className="eyebrow">ARCADE MINI-GAME</span>
           <h1 id="coin-flip-title">Coin Flip</h1>
-          <p className="muted">Call Heads or Tails, then flip. A correct guess earns 10 points.</p>
+          <p className="muted">Call Heads or Tails, then flip. Each flip costs 5 points. A correct guess earns 10 points.</p>
         </div>
         <div className="number-hunt-balance">
           <span>YOUR POINTS</span>
@@ -58,16 +58,16 @@ export default function CoinFlipGame({ balance, onEarnPoints, onGameResult }) {
             </button>
           ))}
         </div>
-        <button className="arcade-primary-button" type="button" onClick={play} disabled={flipping}>
+        <button className="arcade-primary-button" type="button" onClick={play} disabled={flipping || balance < 5}>
           {flipping ? "Flipping…" : "Flip coin"}
         </button>
         <p className="skill-game-status" role="status" aria-live="polite">
-          {flipping ? "The coin is in the air…" : last ? last.won ? "Correct call! +10 points." : "It landed on " + last.result + ". No points lost." : "Choose a side and flip."}
+          {flipping ? "The coin is in the air…" : last ? last.won ? "Correct call! +10 points." : "It landed on " + last.result + ". You lost 5 points." : "Choose a side and flip."}
         </p>
         <div className="skill-game-meta">
           <span>Flips: <strong>{played}</strong></span>
           <span>Reward: <strong>10 pts</strong></span>
-          <span>No entry cost</span>
+          <span>Stake: <strong>5 pts</strong></span>
         </div>
       </div>
     </section>
