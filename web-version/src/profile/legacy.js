@@ -1,9 +1,9 @@
-import { defaultProfile, sanitizeProfile } from "./storage.js";
+import { defaultProfile, sanitizeProfile, MAX_REWARD } from "./storage.js";
 
 /**
  * Converts the existing Python v10 save shape to the web profile shape.
- * Unknown legacy properties are intentionally retained in the base object
- * when writing back, so the web edition does not erase older save metadata.
+ * Unknown legacy properties are retained when writing back to avoid wiping
+ * settings, history, or statistics used by the original desktop version.
  */
 const FIELD_MAP = {
   numberHuntGames: "number_hunt_games",
@@ -19,6 +19,13 @@ const FIELD_MAP = {
 function validCounter(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function validReward(value, fallback) {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0
+    ? Math.min(parsed, MAX_REWARD)
+    : fallback;
 }
 
 function firstDefined(source, snakeCase, camelCase) {
@@ -54,6 +61,10 @@ export function profileFromLegacySave(saveData, fallbackProfile = defaultProfile
     nickname,
     balance: validCounter(saveData.balance, fallback.balance),
     lastDailyReward,
+    dailyReward: validReward(firstDefined(saveData, "daily_reward", "dailyReward"), fallback.dailyReward),
+    numberReward: validReward(firstDefined(saveData, "number_reward", "numberReward"), fallback.numberReward),
+    rpsReward: validReward(firstDefined(saveData, "rps_reward", "rpsReward"), fallback.rpsReward),
+    triviaReward: validReward(firstDefined(saveData, "trivia_reward", "triviaReward"), fallback.triviaReward),
     stats: rawStats,
   });
 }
@@ -68,6 +79,10 @@ export function mergeProfileIntoLegacySave(profile, existingSave = {}) {
   base.balance = clean.balance;
   base.nickname = clean.nickname;
   base.last_daily_reward = clean.lastDailyReward;
+  base.daily_reward = clean.dailyReward;
+  base.number_reward = clean.numberReward;
+  base.rps_reward = clean.rpsReward;
+  base.trivia_reward = clean.triviaReward;
 
   for (const [webKey, legacyKey] of Object.entries(FIELD_MAP)) {
     base[legacyKey] = clean.stats[webKey];
