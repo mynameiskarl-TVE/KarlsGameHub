@@ -430,8 +430,7 @@ function App() {
     Boolean(supabaseClient) &&
     (!authReady ||
       (Boolean(session?.user?.id) &&
-        profileLoadedForUser !== session.user.id &&
-        !moderationStatus.suspended));
+        (profileLoadedForUser !== session.user.id || moderationStatus.suspended)));
 
   return (
     <main className="app-shell">
