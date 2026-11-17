@@ -9,13 +9,13 @@ import {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function NumberHuntGame({ balance, onEarnPoints, onGameResult }) {
+export default function NumberHuntGame({ balance, onEarnPoints, onGameResult, rewardAmount = 20 }) {
   const [game, setGame] = React.useState(null);
   const [guess, setGuess] = React.useState("");
   const [message, setMessage] = React.useState("Start a round to get a secret number.");
 
   function startRound() {
-    setGame(createNumberHunt());
+    setGame(createNumberHunt({ reward: rewardAmount }));
     setGuess("");
     setMessage("I picked a number. You have five guesses!");
   }
@@ -128,7 +128,7 @@ export default function NumberHuntGame({ balance, onEarnPoints, onGameResult }) 
         </div>
         <div>
           <strong>Reward</strong>
-          <p>Find the number to earn 20 points. There is no entry cost and incorrect guesses never remove points.</p>
+          <p>Find the number to earn ${formatPoints(rewardAmount)} points. There is no entry cost and incorrect guesses never remove points.</p>
         </div>
       </div>
     </section>
