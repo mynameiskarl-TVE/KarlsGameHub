@@ -6,6 +6,14 @@ import { defaultProfile, sanitizeProfile, MAX_REWARD } from "./storage.js";
  * settings, history, or statistics used by the original desktop version.
  */
 const FIELD_MAP = {
+  blackjackGames: "blackjack_games",
+  blackjackWins: "blackjack_wins",
+  blackjackLosses: "blackjack_losses",
+  blackjackPushes: "blackjack_pushes",
+  coinFlips: "coin_flips",
+  coinFlipWins: "coin_flip_wins",
+  slotSpins: "slot_spins",
+  slotWins: "slot_wins",
   numberHuntGames: "number_hunt_games",
   numberHuntWins: "number_hunt_wins",
   rpsGames: "rps_games",
