@@ -1,153 +1,139 @@
 import React from "react";
-import {
-  startBlackjackRound,
-  handValue,
-  cardPoints,
-  hitBlackjack,
-  standBlackjack,
-  doubleBlackjack,
-  splitBlackjack,
-} from "../games/blackjack/engine.js";
+import { startBlackjackRound, handValue, cardPoints, hitBlackjack, standBlackjack, doubleBlackjack, splitBlackjack } from "../games/blackjack/engine.js";
 
 const suitColor = (suit) => suit === "♥" || suit === "♦" ? "red" : "black";
+const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
 function PlayingCard({ card, hidden = false }) {
   if (hidden) return <div className="playing-card playing-card-hidden" aria-label="Hidden dealer card"><span>MAH</span></div>;
-  return (
-    <div className={"playing-card " + (suitColor(card.suit) === "red" ? "card-red" : "card-black")}>
-      <span className="card-corner">{card.rank}<br />{card.suit}</span>
-      <strong>{card.suit}</strong>
-      <span className="card-corner card-corner-bottom">{card.rank}<br />{card.suit}</span>
-    </div>
-  );
+  return <div className={"playing-card " + (suitColor(card.suit) === "red" ? "card-red" : "card-black")}>
+    <span className="card-corner">{card.rank}<br />{card.suit}</span><strong>{card.suit}</strong>
+    <span className="card-corner card-corner-bottom">{card.rank}<br />{card.suit}</span>
+  </div>;
 }
 
-export default function BlackjackGame({ balance, onEarnPoints, onGameResult }) {
-  const [round, setRound] = React.useState(null);
-  const [message, setMessage] = React.useState("Start a free round. No points are required to play.");
-  const [roundNumber, setRoundNumber] = React.useState(0);
+function calculatePayout(outcomes, stakes) {
+  return outcomes.reduce((total, item, index) => {
+    const stake = stakes[index] || 0;
+    if (item.outcome === "natural") return total + Math.floor(stake * 2.5);
+    if (item.outcome === "win") return total + stake * 2;
+    if (item.outcome === "push") return total + stake;
+    return total;
+  }, 0);
+}
 
-  function publishFinished(next) {
+export default function BlackjackGame({ balance, freePlay = false, onSpendPoints, onEarnPoints, onGameResult }) {
+  const [round, setRound] = React.useState(null);
+  const [message, setMessage] = React.useState(freePlay ? "Tester free play is enabled. Coins remain unchanged." : "Choose a stake and deal your first hand.");
+  const [roundNumber, setRoundNumber] = React.useState(0);
+  const [bet, setBet] = React.useState("25");
+  const [handStakes, setHandStakes] = React.useState([]);
+
+  React.useEffect(() => {
+    if (freePlay) setMessage("Tester free play is enabled. Coins remain unchanged.");
+  }, [freePlay]);
+
+  function publishFinished(next, stakes) {
     if (next.phase !== "complete" || !next.result) return;
-    if (next.reward > 0) onEarnPoints(next.reward);
-    onGameResult?.({
-      game: "blackjack",
-      wins: next.result.wins,
-      losses: next.result.losses,
-      pushes: next.result.pushes,
-    });
+    const payout = freePlay ? 0 : calculatePayout(next.outcomes, stakes);
+    if (payout > 0) onEarnPoints(payout);
+    onGameResult?.({ game: "blackjack", wins: next.result.wins, losses: next.result.losses, pushes: next.result.pushes });
     const summary = next.outcomes.map((item, index) => "Hand " + (index + 1) + ": " + item.outcome).join(" · ");
-    setMessage(summary + (next.reward ? " — +" + next.reward + " points." : ". No points lost."));
+    setMessage(summary + (freePlay ? " — tester free play: balance unchanged." : payout ? " — returned " + formatPoints(payout) + " coins." : " — stake lost."));
   }
 
   function startRound() {
-    const next = startBlackjackRound();
-    setRound(next);
-    setRoundNumber((value) => value + 1);
-    if (next.phase === "complete") {
-      setMessage("Opening deal: " + next.outcomes[0].outcome + ". +" + next.reward + " points.");
-      publishFinished(next);
-    } else {
-      setMessage("Your turn. Hit, stand, double, or split a matching pair.");
+    const stake = Number(bet);
+    if (!freePlay && (!Number.isSafeInteger(stake) || stake < 1 || stake > balance)) {
+      setMessage("Choose a whole-number stake within your available coin balance.");
+      return;
     }
+    if (!freePlay && !onSpendPoints?.(stake)) {
+      setMessage("You do not have enough coins for that stake.");
+      return;
+    }
+    const next = startBlackjackRound();
+    const stakes = [freePlay ? 0 : stake];
+    setRound(next);
+    setHandStakes(stakes);
+    setRoundNumber((value) => value + 1);
+    if (next.phase === "complete") publishFinished(next, stakes);
+    else setMessage("Your turn. Hit, stand, double, or split a matching pair.");
   }
 
   function perform(action) {
     if (!round || round.phase !== "playing") return;
+    const index = round.activeHand;
+    const extraStake = action === splitBlackjack ? (handStakes[0] || 0) : action === doubleBlackjack ? (handStakes[index] || 0) : 0;
+    if (extraStake > 0 && !freePlay && !onSpendPoints?.(extraStake)) {
+      setMessage("You need " + formatPoints(extraStake) + " more coins to make that move.");
+      return;
+    }
     try {
       const next = action(round);
+      const stakes = handStakes.slice();
+      if (action === splitBlackjack) stakes.splice(0, 1, handStakes[0], handStakes[0]);
+      if (action === doubleBlackjack) stakes[index] = (stakes[index] || 0) * 2;
       setRound(next);
-      if (next.phase === "complete") publishFinished(next);
+      setHandStakes(stakes);
+      if (next.phase === "complete") publishFinished(next, stakes);
       else if (next.activeHand !== round.activeHand) setMessage("Hand " + (next.activeHand + 1) + " is now active.");
       else setMessage("Your turn. Choose your next move.");
     } catch (error) {
+      if (extraStake > 0 && !freePlay) onEarnPoints(extraStake);
       setMessage(error instanceof Error ? error.message : "That move is unavailable.");
     }
   }
 
   const activeHand = round?.hands?.[round.activeHand] || [];
-  const canSplit = Boolean(
-    round?.phase === "playing" &&
-    !round.splitUsed &&
-    round.hands.length === 1 &&
-    activeHand.length === 2 &&
-    cardPoints(activeHand[0]) === cardPoints(activeHand[1])
-  );
+  const canSplit = Boolean(round?.phase === "playing" && !round.splitUsed && round.hands.length === 1 && activeHand.length === 2 && cardPoints(activeHand[0]) === cardPoints(activeHand[1]));
   const canDouble = Boolean(round?.phase === "playing" && activeHand.length === 2);
+  const numericBet = Number(bet);
+  const canAffordBet = freePlay || (Number.isSafeInteger(numericBet) && numericBet >= 1 && numericBet <= balance);
 
-  return (
-    <section className="blackjack-page" aria-labelledby="blackjack-title">
-      <div className="skill-game-heading">
-        <div>
-          <span className="eyebrow">CLASSIC CARD GAME</span>
-          <h1 id="blackjack-title">Blackjack</h1>
-          <p className="muted">Try to finish closer to 21 than the dealer without going over.</p>
-        </div>
-        <div className="number-hunt-balance">
-          <span>YOUR POINTS</span>
-          <strong>{new Intl.NumberFormat("en-US").format(balance)} pts</strong>
-        </div>
+  return <section className="blackjack-page" aria-labelledby="blackjack-title">
+    <div className="skill-game-heading">
+      <div><span className="eyebrow">CLASSIC CARD GAME</span><h1 id="blackjack-title">Blackjack</h1><p className="muted">Try to finish closer to 21 than the dealer without going over.</p></div>
+      <div className="number-hunt-balance"><span>YOUR COINS</span><strong>{formatPoints(balance)} pts</strong></div>
+    </div>
+    <div className="blackjack-table">
+      <div className="blackjack-table-title">MINI ARCADE CARD ROOM</div>
+      {!freePlay && (!round || round.phase === "complete") && <div className="arcade-bet-controls">
+        <label htmlFor="blackjack-bet">Stake per hand</label>
+        <input id="blackjack-bet" type="number" min="1" max={balance} step="1" value={bet} onChange={(event) => setBet(event.target.value)} />
+        <span>Available: {formatPoints(balance)} coins</span>
+      </div>}
+      {freePlay && <p className="tester-freeplay-note">TESTER MODE · No coins are spent or awarded</p>}
+      <section className="blackjack-hand-area" aria-label="Dealer hand">
+        <div className="blackjack-hand-heading"><strong>DEALER</strong><span>{round ? (round.phase === "playing" ? "Showing " + handValue(round.dealer.slice(0, 1)) : "Total " + handValue(round.dealer)) : "Waiting for deal"}</span></div>
+        <div className="playing-cards">{round?.dealer.map((card, index) => <PlayingCard key={"dealer-" + index} card={card} hidden={round.phase === "playing" && index === 1} />)}{!round && <span className="blackjack-empty-hand">Cards will appear here.</span>}</div>
+      </section>
+      <div className="blackjack-divider" />
+      <section className="blackjack-hand-area" aria-label="Player hands">
+        <div className="blackjack-hand-heading"><strong>YOUR HAND{round?.hands.length > 1 ? "S" : ""}</strong><span>{round ? "Hand " + (round.activeHand + 1) + " of " + round.hands.length : "Your turn"}</span></div>
+        {round?.hands.map((hand, index) => <div className={"blackjack-player-hand " + (round.phase === "playing" && round.activeHand === index ? "active" : "")} key={"player-" + index}>
+          <div className="playing-cards">{hand.map((card, cardIndex) => <PlayingCard key={index + "-" + cardIndex} card={card} />)}<span className="blackjack-hand-total">{handValue(hand)}</span></div>
+          <small>{round.handStatus[index] === "playing" ? "IN PLAY" : round.phase === "complete" ? round.outcomes[index]?.outcome?.toUpperCase() : round.handStatus[index]?.toUpperCase()}</small>
+          {!freePlay && <small>Stake: {formatPoints(handStakes[index] || 0)}</small>}
+        </div>)}
+        {!round && <span className="blackjack-empty-hand">Deal to start your round.</span>}
+      </section>
+      <div className="blackjack-message" role="status" aria-live="polite">{message}</div>
+      <div className="blackjack-controls">
+        {!round || round.phase === "complete" ? <button className="arcade-primary-button" type="button" onClick={startRound} disabled={!canAffordBet}>{round ? "Deal again" : "Deal cards"}</button> : <>
+          <button className="arcade-primary-button" type="button" onClick={() => perform(hitBlackjack)}>Hit</button>
+          <button className="arcade-secondary-button" type="button" onClick={() => perform(standBlackjack)}>Stand</button>
+          <button className="arcade-secondary-button" type="button" onClick={() => perform(doubleBlackjack)} disabled={!canDouble || (!freePlay && balance < (handStakes[round.activeHand] || 0))}>Double</button>
+          <button className="arcade-secondary-button" type="button" onClick={() => perform(splitBlackjack)} disabled={!canSplit || (!freePlay && balance < (handStakes[0] || 0))}>Split</button>
+        </>}
       </div>
-
-      <div className="blackjack-table">
-        <div className="blackjack-table-title">MINI ARCADE CARD ROOM</div>
-        <section className="blackjack-hand-area" aria-label="Dealer hand">
-          <div className="blackjack-hand-heading">
-            <strong>DEALER</strong>
-            <span>{round ? (round.phase === "playing" ? "Showing " + handValue(round.dealer.slice(0, 1)) : "Total " + handValue(round.dealer)) : "Waiting for deal"}</span>
-          </div>
-          <div className="playing-cards">
-            {round?.dealer.map((card, index) => (
-              <PlayingCard key={"dealer-" + index} card={card} hidden={round.phase === "playing" && index === 1} />
-            ))}
-            {!round && <span className="blackjack-empty-hand">Cards will appear here.</span>}
-          </div>
-        </section>
-
-        <div className="blackjack-divider" />
-
-        <section className="blackjack-hand-area" aria-label="Player hands">
-          <div className="blackjack-hand-heading">
-            <strong>YOUR HAND{round?.hands.length > 1 ? "S" : ""}</strong>
-            <span>{round ? "Hand " + (round.activeHand + 1) + " of " + round.hands.length : "Your turn"}</span>
-          </div>
-          {round?.hands.map((hand, index) => (
-            <div className={"blackjack-player-hand " + (round.phase === "playing" && round.activeHand === index ? "active" : "")} key={"player-" + index}>
-              <div className="playing-cards">
-                {hand.map((card, cardIndex) => <PlayingCard key={index + "-" + cardIndex} card={card} />)}
-                <span className="blackjack-hand-total">{handValue(hand)}</span>
-              </div>
-              <small>{round.handStatus[index] === "playing" ? "IN PLAY" : round.phase === "complete" ? round.outcomes[index]?.outcome?.toUpperCase() : round.handStatus[index]?.toUpperCase()}</small>
-            </div>
-          ))}
-          {!round && <span className="blackjack-empty-hand">Deal to start your round.</span>}
-        </section>
-
-        <div className="blackjack-message" role="status" aria-live="polite">{message}</div>
-
-        <div className="blackjack-controls">
-          {!round || round.phase === "complete" ? (
-            <button className="arcade-primary-button" type="button" onClick={startRound}>{round ? "Deal again" : "Deal cards"}</button>
-          ) : (
-            <>
-              <button className="arcade-primary-button" type="button" onClick={() => perform(hitBlackjack)}>Hit</button>
-              <button className="arcade-secondary-button" type="button" onClick={() => perform(standBlackjack)}>Stand</button>
-              <button className="arcade-secondary-button" type="button" onClick={() => perform(doubleBlackjack)} disabled={!canDouble}>Double</button>
-              <button className="arcade-secondary-button" type="button" onClick={() => perform(splitBlackjack)} disabled={!canSplit}>Split</button>
-            </>
-          )}
-        </div>
-        <div className="blackjack-round-note">
-          Round {roundNumber} · Free play · No points are spent or lost
-        </div>
-      </div>
-
-      <div className="blackjack-rules">
-        <div><strong>Card values</strong><p>Number cards count as shown. Face cards count as 10. Aces count as 1 or 11.</p></div>
-        <div><strong>Dealer rules</strong><p>The dealer reveals the hidden card and draws until reaching 17 or higher.</p></div>
-        <div><strong>Moves</strong><p>Double takes one final card. Split separates matching opening cards into two hands. Split aces receive one card each.</p></div>
-        <div><strong>Points</strong><p>Win: 25 points. Natural blackjack: 35 points. Push: 5 points. A loss never removes points.</p></div>
-      </div>
-    </section>
-  );
+      <div className="blackjack-round-note">Round {roundNumber} · {freePlay ? "Tester free play" : "Stake-based play"}</div>
+    </div>
+    <div className="blackjack-rules">
+      <div><strong>Card values</strong><p>Number cards count as shown. Face cards count as 10. Aces count as 1 or 11.</p></div>
+      <div><strong>Dealer rules</strong><p>The dealer reveals the hidden card and draws until reaching 17 or higher.</p></div>
+      <div><strong>Moves</strong><p>Double and split each require an additional matching stake. Split aces receive one card each.</p></div>
+      <div><strong>Coins</strong><p>Win: 1:1 net return. Natural blackjack: 3:2 net return. Push: stake returned. Loss: stake is lost.</p></div>
+    </div>
+  </section>;
 }
