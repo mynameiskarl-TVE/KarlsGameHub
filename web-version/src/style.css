@@ -546,3 +546,107 @@
   .audio-actions { flex-direction: column; }
   .audio-actions button { width: 100%; }
 }
+
+
+/* Classic Mini Arcade styling based on the original desktop interface. */
+:root { font-family: "Segoe UI", Tahoma, Arial, sans-serif; color: #e6e8df; background: #122e27; }
+body { background: #122e27; }
+.app-shell { width: 100%; max-width: none; min-height: 100vh; padding: 0 16px; }
+.topbar { align-items: flex-start; padding: 12px 4px 16px; }
+.brand { color: #f0d9a1; font-size: clamp(24px, 3vw, 31px); font-weight: 700; letter-spacing: 0; }
+.account-area-button {
+  border: 0; padding: 0; background: transparent; display: flex; flex-direction: column;
+  align-items: flex-end; gap: 3px; text-align: right; cursor: pointer;
+}
+.account-area-button:focus-visible { outline: 2px solid #f0d9a1; outline-offset: 4px; }
+.account-area-button .balance { color: #f0d9a1; font-size: 17px; line-height: 1.2; }
+.account-area-button .profile-name { display: block; color: #d0ddd4; font-size: 11px; font-weight: 400; }
+.announcement { margin-bottom: 10px; border-radius: 0; padding: 10px 13px; background: #294b40; color: #e5e9df; font-size: 12px; }
+.tabs { gap: 0; padding: 0; border-bottom: 0; overflow-x: auto; }
+.tab {
+  border: 1px solid #d4ddd4; border-bottom: 0; border-radius: 0; margin: 0; padding: 10px 18px;
+  background: #294b40; color: #f0f1e9; font-size: 12px;
+}
+.tab.active { background: #ead59a; color: #132f27; border-color: #d4ddd4; }
+.content { flex: 1; min-height: 640px; margin-bottom: 10px; padding: 20px 16px 14px; border: 1px solid #d5ddd5; }
+.content h1 { color: #f0d9a1; font-size: clamp(23px, 2vw, 28px); font-weight: 700; margin-bottom: 8px; }
+.content .muted { color: #c9d8ce; font-size: 12px; }
+.classic-panel { min-width: 0; padding: 16px 18px; border: 1px solid #36594d; border-radius: 0; background: #1d4036; }
+.classic-panel h2 { margin: 0 0 9px; color: #f0d9a1; font-size: 15px; font-weight: 700; }
+.classic-panel p { margin: 0 0 9px; color: #d9e3db; font-size: 12px; line-height: 1.45; }
+.classic-panel p:last-child { margin-bottom: 0; }
+.home-page { width: 100%; }
+.home-intro { margin: 0 0 22px; color: #d1ded5; font-size: 12px; }
+.home-summary-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 9px; margin: 20px 0 12px; }
+.daily-login-panel, .arcade-summary-panel { min-height: 142px; }
+.arcade-summary-list { margin: 8px 0 0; padding: 0; list-style: none; color: #e2e8e1; font-size: 12px; line-height: 1.25; }
+.quick-launch-panel { margin-bottom: 12px; }
+.quick-launch-actions { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 14px; }
+.quick-launch-button {
+  min-width: 145px; min-height: 38px; padding: 9px 15px; border: 1px solid #36594d;
+  border-radius: 0; background: #31594d; color: #f5f2e7; font: inherit; font-size: 12px;
+  font-weight: 700; cursor: pointer;
+}
+.quick-launch-button:hover, .quick-launch-button:focus-visible { border-color: #ebd79f; outline: none; }
+.quick-launch-button.quick-launch-primary { border-color: #e6d099; background: #e6d099; color: #143027; }
+.trophy-shelf-panel { min-height: 280px; }
+.trophy-list { margin: 12px 0 0; padding: 0; list-style: none; color: #e3e9e1; font-size: 12px; line-height: 1.45; }
+.trophy-list li::before { content: "☆"; display: inline-block; width: 20px; color: #f0d9a1; }
+.blackjack-coming-soon { max-width: 950px; }
+.blackjack-coming-soon .classic-panel { margin-top: 20px; }
+.game-grid { gap: 10px; }
+.game-card {
+  min-height: 112px; padding: 16px; border: 1px solid #36594d; border-radius: 0;
+  background: #1d4036; box-shadow: none;
+}
+.game-card:hover, .game-card:focus-visible { border-color: #e6d099; background: #254a3e; }
+.game-card strong { color: #f0d9a1; font-size: 14px; }
+.game-card small { color: #d4e0d7; font-size: 12px; }
+.classic-back-button {
+  min-height: 34px; margin-bottom: 14px; padding: 7px 12px; border: 1px solid #c8d4cc;
+  border-radius: 0; background: #294b40; color: #edf1e8; font-size: 12px; cursor: pointer;
+}
+.classic-back-button:hover { border-color: #e6d099; }
+footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 11px; }
+.footer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.footer-actions button {
+  min-height: 34px; padding: 7px 12px; border: 1px solid #36594d; border-radius: 0;
+  background: #294b40; color: #eaf0e9; font: inherit; cursor: pointer;
+}
+.footer-actions button:hover, .footer-actions button:focus-visible { border-color: #e6d099; outline: none; }
+.footer-actions .owner-console-button { border-color: #e6d099; background: #31594d; }
+.card, .profile-card, .account-panel, .number-hunt-card, .number-hunt-info > div, .rps-card,
+.rps-result, .trivia-card, .trivia-feedback, .admin-card, .admin-list-row, .admin-status,
+.audio-settings-card, .leaderboard-table-wrap, .prank-popup, .number-hunt-balance, .rps-balance,
+.trivia-balance { border-radius: 0 !important; box-shadow: none !important; }
+.number-hunt-card { background: #1d4036; }
+.profile-action-button, .number-hunt-button, .trivia-primary, .account-primary-button,
+.account-secondary-button, .leaderboard-refresh, .admin-primary-button, .admin-secondary-button,
+.admin-danger-button, .audio-primary-button, .audio-secondary-button, .small-button { border-radius: 0; }
+.rps-move-button, .trivia-option, .profile-name-row input, .connection-form input, .auth-form-wrap input,
+.admin-form input, .admin-form textarea, .admin-form select { border-radius: 0; }
+.rps-move-word { display: block; color: #f0d9a1; font-size: 14px; font-weight: 800; letter-spacing: 1px; }
+.prank-popup-tag {
+  display: inline-block; margin-bottom: 10px; padding: 6px 10px; border: 1px solid #d9c58c;
+  color: #f1dfad; font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+}
+.prank-ducks span {
+  font-size: 12px; font-weight: 900; letter-spacing: 1px; color: #f1dfad;
+  border: 1px solid rgba(241, 223, 173, .65); background: rgba(24, 53, 43, .9); padding: 5px 8px;
+}
+@media (max-width: 760px) {
+  .app-shell { padding: 0 10px; }
+  .content { min-height: 420px; padding: 17px 11px 12px; }
+  .home-summary-grid { grid-template-columns: 1fr; }
+  .daily-login-panel, .arcade-summary-panel { min-height: auto; }
+  .trophy-shelf-panel { min-height: 180px; }
+}
+@media (max-width: 480px) {
+  .topbar { gap: 8px; }
+  .brand { font-size: 23px; }
+  .tab { padding: 10px 12px; font-size: 11px; }
+  .quick-launch-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .quick-launch-button { min-width: 0; width: 100%; padding: 8px; }
+  footer { align-items: flex-start; flex-direction: column; }
+  .footer-actions { width: 100%; }
+}
