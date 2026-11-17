@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -29,7 +29,25 @@ jobs:
           node-version: 22
       - name: Install dependencies
         working-directory: web-version
-        run: npm install
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - name: Commit generated dependency lockfile
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: .
+        shell: bash
+        run: |
+          git add web-version/package-lock.json
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore(web): commit dependency lockfile [skip ci]"
+            git push origin HEAD:main
+          fi
       - name: Audit installed dependencies
         working-directory: web-version
         shell: bash
