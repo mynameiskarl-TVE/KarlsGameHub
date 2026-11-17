@@ -22,7 +22,7 @@ function safeError(error) {
 }
 
 export default function AdminPanel({ client, role }) {
-  const [snapshot, setSnapshot] = React.useState({ roles: [], suspended: [], audit: [], onlinePlayers: [] });
+  const [snapshot, setSnapshot] = React.useState({ roles: [], freePlayTesters: [], suspended: [], audit: [], onlinePlayers: [] });
   const [status, setStatus] = React.useState("Loading protected admin information…");
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState(false);
