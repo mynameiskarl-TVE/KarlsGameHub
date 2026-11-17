@@ -27,15 +27,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
+      - name: Refresh dependency lockfile
         working-directory: web-version
-        shell: bash
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Install dependencies from lockfile
+        working-directory: web-version
+        run: npm ci
       - name: Audit installed dependencies
         working-directory: web-version
         shell: bash
