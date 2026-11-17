@@ -7,7 +7,7 @@ import {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function TriviaGame({ balance, onEarnPoints }) {
+export default function TriviaGame({ balance, onEarnPoints, onGameResult }) {
   const [quiz, setQuiz] = React.useState(null);
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [message, setMessage] = React.useState("Start a quiz when you are ready.");
@@ -28,6 +28,12 @@ export default function TriviaGame({ balance, onEarnPoints }) {
 
       if (next.lastAnswer.earnedNow > 0) {
         onEarnPoints(next.lastAnswer.earnedNow);
+      }
+      if (next.result) {
+        onGameResult?.({
+          game: "trivia",
+          correctAnswers: next.result.correctAnswers,
+        });
       }
       setMessage(next.lastAnswer.message);
     } catch (error) {
