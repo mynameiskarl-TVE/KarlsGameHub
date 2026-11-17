@@ -1,7 +1,11 @@
 export const PROFILE_STORAGE_KEY = "mini-arcade-hub.profile.v1";
 export const STARTING_BALANCE = 500;
 export const DAILY_REWARD = 100;
+export const NUMBER_HUNT_REWARD = 20;
+export const RPS_REWARD = 10;
+export const TRIVIA_REWARD = 5;
 export const MAX_BALANCE = 1_000_000_000;
+export const MAX_REWARD = 100_000;
 export const MAX_NICKNAME_LENGTH = 18;
 
 export const STAT_KEYS = [
@@ -20,6 +24,10 @@ export function defaultProfile() {
     nickname: "Player",
     balance: STARTING_BALANCE,
     lastDailyReward: "",
+    dailyReward: DAILY_REWARD,
+    numberReward: NUMBER_HUNT_REWARD,
+    rpsReward: RPS_REWARD,
+    triviaReward: TRIVIA_REWARD,
     stats: Object.fromEntries(STAT_KEYS.map((key) => [key, 0])),
   };
 }
@@ -28,6 +36,12 @@ function safeCount(value) {
   const number = Number(value);
   if (!Number.isSafeInteger(number) || number < 0) return 0;
   return Math.min(number, MAX_BALANCE);
+}
+
+function safeReward(value, fallback) {
+  const number = Number(value);
+  if (!Number.isSafeInteger(number) || number < 0) return fallback;
+  return Math.min(number, MAX_REWARD);
 }
 
 export function sanitizeProfile(value) {
@@ -54,6 +68,10 @@ export function sanitizeProfile(value) {
     nickname: nickname || fallback.nickname,
     balance: Math.min(MAX_BALANCE, safeCount(value.balance ?? fallback.balance)),
     lastDailyReward,
+    dailyReward: safeReward(value.dailyReward, fallback.dailyReward),
+    numberReward: safeReward(value.numberReward, fallback.numberReward),
+    rpsReward: safeReward(value.rpsReward, fallback.rpsReward),
+    triviaReward: safeReward(value.triviaReward, fallback.triviaReward),
     stats: Object.fromEntries(
       STAT_KEYS.map((key) => [key, safeCount(rawStats[key])])
     ),
@@ -79,7 +97,6 @@ export function saveProfile(profile, storage, key = PROFILE_STORAGE_KEY) {
     storage.setItem(key, JSON.stringify(sanitizeProfile(profile)));
     return true;
   } catch {
-    // Storage may be unavailable, full, or disabled by browser privacy settings.
     return false;
   }
 }
@@ -93,21 +110,21 @@ export function getLocalDateKey(date = new Date()) {
   return localDate.toISOString().slice(0, 10);
 }
 
-export function claimDailyReward(profile, today = getLocalDateKey(), reward = DAILY_REWARD) {
+export function claimDailyReward(profile, today = getLocalDateKey(), reward) {
   const current = sanitizeProfile(profile);
+  const rewardAmount = reward === undefined
+    ? current.dailyReward
+    : safeReward(reward, current.dailyReward);
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) {
     throw new TypeError("The daily reward date must use YYYY-MM-DD format.");
-  }
-  if (!Number.isSafeInteger(reward) || reward < 0) {
-    throw new RangeError("The daily reward must be a non-negative whole number.");
   }
 
   if (current.lastDailyReward === today) {
     return { profile: current, claimed: false, reward: 0 };
   }
 
-  const credited = Math.min(reward, MAX_BALANCE - current.balance);
+  const credited = Math.min(rewardAmount, MAX_BALANCE - current.balance);
   const nextProfile = {
     ...current,
     balance: current.balance + credited,
