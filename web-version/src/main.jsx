@@ -291,8 +291,7 @@ function App() {
             await syncPlayerLeaderboard(
               supabaseClient,
               userId,
-              latestProfile,
-              updatedBase
+              latestProfile
             );
 
             if (!cancelled) {
