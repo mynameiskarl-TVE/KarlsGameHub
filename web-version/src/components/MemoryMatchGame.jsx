@@ -14,7 +14,7 @@ function makeDeck() {
   return cards;
 }
 
-export default function MemoryMatchGame({ balance, onEarnPoints, onGameResult }) {
+export default function MemoryMatchGame({ balance, onSpendPoints, onEarnPoints, onGameResult }) {
   const [cards, setCards] = React.useState(makeDeck);
   const [flipped, setFlipped] = React.useState([]);
   const [matched, setMatched] = React.useState([]);
@@ -31,6 +31,7 @@ export default function MemoryMatchGame({ balance, onEarnPoints, onGameResult })
   function turnCard(index) {
     if (locked || complete || matched.includes(index) || flipped.includes(index)) return;
 
+    if (flipped.length === 1 && (balance < 2 || !onSpendPoints?.(2))) { setMessage("You need 2 points to turn over another pair."); return; }
     const nextFlipped = flipped.concat(index);
     setFlipped(nextFlipped);
     if (nextFlipped.length !== 2) return;
@@ -89,7 +90,7 @@ export default function MemoryMatchGame({ balance, onEarnPoints, onGameResult })
 
       <div className="skill-game-card">
         <h2>{complete ? "Round complete" : "Find the pairs"}</h2>
-        <p>Each completed round earns 25 local progress points.</p>
+        <p>Each completed round earns 25 points. Every two-card attempt costs 2 points.</p>
         <div className="memory-grid">
           {cards.map((card, index) => {
             const visible = flipped.includes(index) || matched.includes(index);
