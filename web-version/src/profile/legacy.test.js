@@ -16,6 +16,7 @@ test("converts an existing Python save into the browser profile", () => {
     number_hunt_wins: 8,
     rps_games: 9,
     rps_wins: 5,
+    rps_ties: 3,
     trivia_games: 4,
     trivia_correct: 16,
     daily_logins: 7,
@@ -27,6 +28,7 @@ test("converts an existing Python save into the browser profile", () => {
   assert.equal(profile.stats.numberHuntWins, 8);
   assert.equal(profile.stats.rpsGames, 9);
   assert.equal(profile.stats.rpsWins, 5);
+  assert.equal(profile.stats.rpsTies, 3);
   assert.equal(profile.stats.triviaGames, 4);
   assert.equal(profile.stats.triviaCorrect, 16);
   assert.equal(profile.stats.dailyLogins, 7);
