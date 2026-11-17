@@ -237,3 +237,77 @@
   .profile-action-button { width: 100%; }
   .profile-stats-grid { grid-template-columns: 1fr; }
 }
+
+/* Supabase account and cloud-save panel */
+.account-page { max-width: 760px; margin: 0 auto; }
+.account-page-heading { margin-bottom: 20px; }
+.account-page-heading .muted { margin: 0; }
+.account-panel {
+  padding: clamp(18px, 4vw, 28px);
+  border: 1px solid #466b5b;
+  border-radius: 16px;
+  background: #203c34;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .14);
+}
+.account-panel h2 { color: #f1dfad; font-size: 20px; margin: 0 0 12px; }
+.connection-form, .auth-form-wrap { display: flex; flex-direction: column; gap: 10px; }
+.connection-form p, .connection-saved p { color: #c2d4c9; font-size: 13px; line-height: 1.55; margin: 0 0 8px; }
+.connection-form label, .auth-form-wrap label {
+  color: #e6d49e; font-size: 12px; font-weight: 900; margin-top: 5px;
+}
+.connection-form input, .auth-form-wrap input {
+  width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #607b6f;
+  border-radius: 8px; background: #f6f0dd; color: #1a3028; font-size: 14px;
+}
+.connection-form input:focus-visible, .auth-form-wrap input:focus-visible {
+  outline: 2px solid #f1dfad; outline-offset: 3px;
+}
+.connection-form button, .auth-form-wrap button { margin-top: 7px; }
+.account-primary-button, .account-secondary-button {
+  min-height: 43px; padding: 10px 17px; border-radius: 8px; font-weight: 900; cursor: pointer;
+}
+.account-primary-button { border: 1px solid #d9c58c; background: #e5cf91; color: #17342b; }
+.account-primary-button:hover:not(:disabled) { background: #f1dfad; }
+.account-secondary-button { border: 1px solid #607b6f; background: #29473f; color: #f6f0dd; }
+.account-secondary-button:hover:not(:disabled) { border-color: #d9c58c; }
+.account-primary-button:disabled, .account-secondary-button:disabled { opacity: .5; cursor: not-allowed; }
+.account-text-button { align-self: flex-start; border: 0; background: none; color: #e5cf91; font-size: 12px; font-weight: 800; cursor: pointer; }
+.account-text-button:hover { color: #f1dfad; text-decoration: underline; }
+.connection-saved {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding-bottom: 18px; border-bottom: 1px solid #35584d; margin-bottom: 18px;
+}
+.connection-saved > strong { max-width: 100%; color: #dbe7dc; font-size: 13px; overflow-wrap: anywhere; }
+.auth-mode-tabs { display: flex; gap: 7px; margin-bottom: 8px; }
+.auth-mode {
+  flex: 1; min-height: 40px; border: 1px solid #466b5b; border-radius: 8px;
+  background: #29473f; color: #dbe7dc; font-weight: 800; cursor: pointer;
+}
+.auth-mode.active { border-color: #d9c58c; background: #d9c58c; color: #17342b; }
+.account-security-note {
+  margin: 5px 0 0; color: #9fb7aa; font-size: 11px; line-height: 1.55;
+}
+.account-message {
+  margin: 16px 0 0; padding: 12px; border: 1px solid #466b5b; border-radius: 8px;
+  background: #29473f; color: #f1dfad; font-size: 12px; line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.account-signed-in { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.account-status-icon {
+  width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 12px;
+  border: 1px solid #9fbd8e; border-radius: 50%; background: rgba(159, 189, 142, .12);
+  color: #c5dba7; font-size: 27px; font-weight: 900;
+}
+.account-signed-in h2 { margin: 5px 0; overflow-wrap: anywhere; }
+.account-signed-in > p { margin: 2px 0 14px; color: #c2d4c9; font-size: 13px; }
+.cloud-status {
+  width: 100%; display: flex; align-items: flex-start; gap: 9px; margin-top: 10px;
+  padding: 12px; border: 1px solid #35584d; border-radius: 9px; background: #29473f;
+  color: #d3e0d6; font-size: 12px; line-height: 1.5; text-align: left; overflow-wrap: anywhere;
+}
+.cloud-status-dot { width: 8px; height: 8px; flex: 0 0 8px; margin-top: 4px; border-radius: 50%; background: #a4be8c; }
+.account-button-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 15px; }
+.cloud-loading-screen {
+  padding: 34px 18px; border: 1px solid #466b5b; border-radius: 14px;
+  background: #203c34; color: #e5cf91; text-align: center; line-height: 1.6;
+}
