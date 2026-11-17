@@ -22,6 +22,7 @@ import {
   loadSupabaseConfig,
   saveSupabaseConfig,
 } from "./lib/supabase.js";
+import { DEFAULT_SUPABASE_CONFIG } from "./lib/defaultSupabaseConfig.js";
 import {
   fetchPlayerCloudSave,
   fetchPlayerModerationStatus,
@@ -40,14 +41,10 @@ import "./style.css";
 
 const tabs = [
   "Home",
+  "Blackjack",
   "Arcade games",
-  "Number Hunt",
-  "Rock Paper Scissors",
-  "Trivia",
   "Profile & stats",
   "Leaderboard",
-  "Settings",
-  "Account",
 ];
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
@@ -55,9 +52,9 @@ const accountStorageKey = (userId) => `${PROFILE_STORAGE_KEY}.account.${userId}`
 
 function readStoredSupabaseConfig() {
   try {
-    return loadSupabaseConfig(window.localStorage);
+    return loadSupabaseConfig(window.localStorage) || DEFAULT_SUPABASE_CONFIG;
   } catch {
-    return null;
+    return DEFAULT_SUPABASE_CONFIG;
   }
 }
 
@@ -84,7 +81,6 @@ function App() {
   const [profile, setProfile] = React.useState(() => readProfileForKey());
   const [nicknameInput, setNicknameInput] = React.useState(profile.nickname);
   const [nicknameMessage, setNicknameMessage] = React.useState("");
-  const [dailyRewardMessage, setDailyRewardMessage] = React.useState("");
   const [storageStatus, setStorageStatus] = React.useState("Checking browser storage…");
 
   const [supabaseConfig, setSupabaseConfig] = React.useState(readStoredSupabaseConfig);
@@ -533,8 +529,17 @@ function App() {
 
   const balance = profile.balance;
   const today = getLocalDateKey();
-  const dailyRewardClaimed = profile.lastDailyReward === today;
   const stats = profile.stats;
+
+  // Match the original desktop game: one daily reward is granted automatically.
+  // The functional update makes this safe under StrictMode and cloud-save hydration.
+  React.useEffect(() => {
+    if (profile.lastDailyReward === today) return;
+    setProfile((current) => {
+      if (current.lastDailyReward === today) return current;
+      return claimDailyReward(current, today).profile;
+    });
+  }, [today, profile.lastDailyReward]);
   const totalGamesPlayed =
     stats.numberHuntGames + stats.rpsGames + stats.triviaGames;
 
@@ -573,17 +578,6 @@ function App() {
 
       return { ...current, stats: nextStats };
     });
-  }
-
-  function collectDailyReward() {
-    const result = claimDailyReward(profile, today);
-    if (!result.claimed) {
-      setDailyRewardMessage("Today's reward has already been collected.");
-      return;
-    }
-
-    setProfile(result.profile);
-    setDailyRewardMessage(`Daily reward collected: +${formatPoints(result.reward)} points.`);
   }
 
   function saveNickname(event) {
@@ -630,10 +624,9 @@ function App() {
     });
   }
 
-  function gameCard(title, description, icon, tab) {
+  function gameCard(title, description, tab) {
     return (
       <button className="game-card" type="button" key={title} onClick={() => setActive(tab)}>
-        <span className="game-icon" aria-hidden="true">{icon}</span>
         <strong>{title}</strong>
         <small>{description}</small>
       </button>
@@ -660,7 +653,10 @@ function App() {
     Boolean(session?.user?.id) &&
     adminVerifiedForUser === session.user.id &&
     (adminRole === "owner" || adminRole === "admin");
-  const visibleTabs = isAdminForCurrentUser ? [...tabs, "Admin"] : tabs;
+  const visibleTabs = tabs;
+  const primaryActiveTab = ["Number Hunt", "Rock Paper Scissors", "Trivia"].includes(active)
+    ? "Arcade games"
+    : active;
 
   React.useEffect(() => {
     if (active === "Admin" && !isAdminForCurrentUser) {
@@ -679,23 +675,15 @@ function App() {
         >
           MINI ARCADE
         </button>
-        <div className="account-area">
-          {session?.user ? (
-            <>
-              <span className="profile-name">{signedInUsername}</span>
-              <span className="balance">{formatPoints(balance)} pts</span>
-            </>
-          ) : (
-            <>
-              <span className="profile-name">{profile.nickname}</span>
-              <span className="balance">{formatPoints(balance)} pts</span>
-            </>
-          )}
-          <button className="small-button" type="button" onClick={() => setActive("Account")}>
-            {session?.user ? "Account" : "Sign in"}
-          </button>
-        </div>
-      </header>
+        <button
+          className="account-area account-area-button"
+          type="button"
+          onClick={() => setActive("Account")}
+          aria-label="Open account settings"
+        >
+          <span className="balance">{formatPoints(balance)} pts</span>
+          <span className="profile-name">{session?.user ? "Signed in as " + signedInUsername : "Signed in as " + profile.nickname}</span>
+        </button>      </header>
 
       <div className="announcement">
         Welcome to Mini Arcade! Have fun and enjoy the games.
@@ -706,7 +694,7 @@ function App() {
           <button
             key={tab}
             type="button"
-            className={active === tab ? "tab active" : "tab"}
+            className={primaryActiveTab === tab ? "tab active" : "tab"}
             onClick={() => setActive(tab)}
             aria-current={active === tab ? "page" : undefined}
           >
@@ -716,61 +704,82 @@ function App() {
       </nav>
 
       <section className="content">
+
         {active === "Home" && (
-          <>
-            <h1>Welcome back, {session?.user ? signedInUsername : profile.nickname}</h1>
-            <p className="muted">Your games, stats and rewards — all in one place.</p>
-            <div className="cards">
-              <article className="card">
-                <h2>YOUR BALANCE</h2>
-                <p>Your current arcade balance is {formatPoints(balance)} points.</p>
-                <span className="pill">Fictional points</span>
+          <section className="home-page" aria-labelledby="home-title">
+            <h1 id="home-title">Welcome to the arcade, {session?.user ? signedInUsername : profile.nickname}!</h1>
+            <p className="home-intro">Welcome to Mini Arcade! Have fun and enjoy the games.</p>
+
+            <div className="home-summary-grid">
+              <article className="classic-panel daily-login-panel">
+                <h2>DAILY LOGIN</h2>
+                <p>Collect {formatPoints(profile.dailyReward)} points once per calendar day.</p>
+                <p>Your daily reward is handled automatically when you open the game.</p>
               </article>
-              <article className="card">
-                <h2>DAILY REWARD</h2>
-                <p>{`Collect ${formatPoints(profile.dailyReward)} points once per local calendar day.`}</p>
-                <button
-                  className="profile-action-button"
-                  type="button"
-                  onClick={collectDailyReward}
-                  disabled={dailyRewardClaimed || (Boolean(session?.user) && isCloudLoading)}
-                >
-                  {dailyRewardClaimed ? "Collected today" : "Claim +100 points"}
-                </button>
-                <p className="daily-reward-message" role="status" aria-live="polite">
-                  {dailyRewardMessage || (dailyRewardClaimed ? "Today's reward has already been collected." : "Your daily reward is ready.")}
-                </p>
-              </article>
-              <article className="card">
-                <h2>YOUR PROGRESS</h2>
-                <p>{formatPoints(totalGamesPlayed)} completed games across the web arcade.</p>
-                <span className="pill">{session?.user ? "Cloud account" : "Offline profile"}</span>
+              <article className="classic-panel arcade-summary-panel">
+                <h2>YOUR ARCADE</h2>
+                <p>Your personal {session?.user ? "cloud-synced" : "local"} progress.</p>
+                <ul className="arcade-summary-list">
+                  <li>Blackjack wins: {formatPoints(stats.blackjackWins || 0)}</li>
+                  <li>Mini-game wins: {formatPoints(stats.numberHuntWins + stats.rpsWins)}</li>
+                  <li>Trivia answers correct: {formatPoints(stats.triviaCorrect)}</li>
+                  <li>Daily logins: {formatPoints(stats.dailyLogins)}</li>
+                </ul>
               </article>
             </div>
-            <h2 className="section-heading">Jump back in</h2>
-            <div className="game-grid">
-              {gameCard("Number Hunt", "Find the secret number", "🔎", "Number Hunt")}
-              {gameCard("Rock Paper Scissors", "Choose your move", "✊", "Rock Paper Scissors")}
-              {gameCard("Quick Trivia", "Try five questions", "❔", "Trivia")}
+
+            <section className="classic-panel quick-launch-panel" aria-labelledby="quick-launch-title">
+              <h2 id="quick-launch-title">QUICK LAUNCH</h2>
+              <p>Pick a game and jump right in.</p>
+              <div className="quick-launch-actions">
+                <button className="quick-launch-button quick-launch-primary" type="button" onClick={() => setActive("Blackjack")}>Blackjack</button>
+                <button className="quick-launch-button" type="button" onClick={() => setActive("Arcade games")}>Mini-games</button>
+                <button className="quick-launch-button" type="button" onClick={() => setActive("Profile & stats")}>Profile &amp; stats</button>
+                <button className="quick-launch-button" type="button" onClick={() => setActive("Leaderboard")}>Leaderboard</button>
+              </div>
+            </section>
+
+            <section className="classic-panel trophy-shelf-panel" aria-labelledby="trophy-shelf-title">
+              <h2 id="trophy-shelf-title">TROPHY SHELF</h2>
+              <p>A few milestones to chase.</p>
+              <ul className="trophy-list">
+                <li>First victory</li>
+                <li>Arcade regular</li>
+                <li>Quiz whiz</li>
+                <li>Mini-game explorer</li>
+                <li>Point collector</li>
+              </ul>
+            </section>
+          </section>
+        )}
+
+        {active === "Blackjack" && (
+          <section className="blackjack-coming-soon" aria-labelledby="blackjack-title">
+            <h1 id="blackjack-title">Blackjack</h1>
+            <p className="muted">The Blackjack page is reserved for the next migration stage.</p>
+            <div className="classic-panel">
+              <h2>BLACKJACK</h2>
+              <p>The original desktop game is being used as the reference so the web version can keep its familiar layout and controls.</p>
+              <p>Your local profile, account, and other arcade pages remain available while this page is prepared.</p>
             </div>
-          </>
+          </section>
         )}
 
         {active === "Arcade games" && (
           <>
             <h1>Arcade Games</h1>
-            <p className="muted">Choose a game to play. More of the original collection will be added here.</p>
+            <p className="muted">Choose a mini-game to play.</p>
             <div className="game-grid arcade-game-grid">
-              {gameCard("Number Hunt", "Find the secret number in five guesses", "🔎", "Number Hunt")}
-              {gameCard("Rock Paper Scissors", "Play against the computer", "✊", "Rock Paper Scissors")}
-              {gameCard("Quick Trivia", "Answer five randomly selected questions", "❔", "Trivia")}
+              {gameCard("Number Hunt", "Find the secret number in five guesses", "Number Hunt")}
+              {gameCard("Rock Paper Scissors", "Play against the computer", "Rock Paper Scissors")}
+              {gameCard("Quick Trivia", "Answer five randomly selected questions", "Trivia")}
             </div>
-            <p className="session-note">Games with entry bets or point-loss mechanics are not included in this web migration.</p>
           </>
         )}
 
         {/* Keep games mounted when switching tabs, so active rounds are preserved. */}
         <div hidden={active !== "Number Hunt"}>
+          {active === "Number Hunt" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
@@ -778,6 +787,7 @@ function App() {
           )}
         </div>
         <div hidden={active !== "Rock Paper Scissors"}>
+          {active === "Rock Paper Scissors" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
@@ -785,6 +795,7 @@ function App() {
           )}
         </div>
         <div hidden={active !== "Trivia"}>
+          {active === "Trivia" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
@@ -941,8 +952,14 @@ function App() {
       </section>
 
       <footer>
-        <span>Mini Arcade Hub</span>
-        <span>Web edition · Early development</span>
+        <span>Daily login reward: +{formatPoints(profile.dailyReward)} points. Welcome back!</span>
+        <div className="footer-actions">
+          <button type="button" onClick={() => setActive("Settings")}>Settings</button>
+          <button type="button" onClick={() => setActive("Account")}>Account</button>
+          {isAdminForCurrentUser && (
+            <button type="button" className="owner-console-button" onClick={() => setActive("Admin")}>Owner console</button>
+          )}
+        </div>
       </footer>
       {prankQueue.length > 0 && (
         <PrankOverlay event={prankQueue[0]} onDismiss={dismissPrank} />
