@@ -1,10 +1,10 @@
 import React from "react";
 import { RPS_MOVES, playRockPaperScissors } from "../games/rock-paper-scissors/engine.js";
 
-const icons = {
-  Rock: "✊",
-  Paper: "✋",
-  Scissors: "✌",
+const moveLabels = {
+  Rock: "ROCK",
+  Paper: "PAPER",
+  Scissors: "SCISSORS",
 };
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
@@ -61,7 +61,7 @@ export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameRes
               onClick={() => play(move)}
               aria-label={move}
             >
-              <span className="rps-move-icon" aria-hidden="true">{icons[move]}</span>
+              <span className="rps-move-word" aria-hidden="true">{moveLabels[move]}</span>
               <strong>{move}</strong>
             </button>
           ))}
@@ -70,9 +70,9 @@ export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameRes
         {lastRound ? (
           <div className={`rps-result rps-result-${lastRound.outcome}`} role="status" aria-live="polite">
             <div className="rps-versus">
-              <div><span>You</span><strong>{icons[lastRound.playerMove]}</strong><small>{lastRound.playerMove}</small></div>
+              <div><span>You</span><strong>{lastRound.playerMove}</strong></div>
               <span className="versus-label">VS</span>
-              <div><span>Computer</span><strong>{icons[lastRound.computerMove]}</strong><small>{lastRound.computerMove}</small></div>
+              <div><span>Computer</span><strong>{lastRound.computerMove}</strong></div>
             </div>
             <strong className="rps-result-message">{lastRound.message}</strong>
           </div>
