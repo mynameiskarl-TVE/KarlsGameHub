@@ -65,7 +65,7 @@ export default function TriviaGame({ balance, onEarnPoints, onGameResult, reward
           <>
             <div className="trivia-symbol" aria-hidden="true">?</div>
             <h2>Ready for a quick quiz?</h2>
-            <p className="trivia-copy">Answer five multiple-choice questions. Each correct answer earns ${formatPoints(rewardPerCorrect)} points, with a 10-point bonus for a perfect score.</p>
+            <p className="trivia-copy">{`Answer five multiple-choice questions. Each correct answer earns ${formatPoints(rewardPerCorrect)} points, with a 10-point bonus for a perfect score.`}</p>
             <button className="trivia-primary" type="button" onClick={startQuiz}>Start quiz</button>
           </>
         ) : quiz.active ? (
