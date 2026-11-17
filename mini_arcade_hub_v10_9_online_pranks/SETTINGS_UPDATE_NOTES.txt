@@ -1,0 +1,9 @@
+v10.7 update notes
+
+- Background music explicitly uses infinite looping and a playback watchdog.
+- Added seven temporary online admin pranks delivered through authenticated Supabase RPCs.
+- Added heartbeat-based online player list and immediate presence removal on normal logout/close.
+- Server validates admin role, target online status, allowed prank types, and cooldowns.
+- No direct client access to prank/presence tables; no service-role key is used.
+- Run supabase_pranks_setup.sql after supabase_setup.sql and supabase_admin_setup.sql.
+- See SUPABASE_SETUP.md for setup and usage instructions.

@@ -1,0 +1,23 @@
+VALIDATION NOTES — MINI ARCADE HUB v10.7
+
+Implemented in this update:
+- Background music uses Pygame infinite looping and a watchdog restart if playback unexpectedly stops.
+- Online presence heartbeat and immediate leave RPC for normal sign-out/close.
+- Admin-only online player listing and seven temporary prank effects.
+- Server-side admin role checks, event-type allow-list, online-target check, cooldowns, audit logging, and per-user event polling.
+- Direct authenticated/anonymous table access to presence and prank-event tables is revoked.
+- Added setup and usage instructions in SUPABASE_SETUP.md.
+
+Local validation performed:
+- Python compileall completed successfully for all project modules.
+- Project app/module import smoke test.
+- Checked required files and ZIP integrity.
+- Confirmed SQL function names match the Python RPC calls.
+
+Not performed in this environment:
+- The SQL has not been executed against the user's live Supabase project.
+- No live multi-client test was possible because this environment does not have the user's Supabase session.
+- Tkinter popup visuals/audio and the Windows PyInstaller build still need a smoke test on Windows.
+
+Important: run supabase_pranks_setup.sql in Supabase SQL Editor after the existing
+supabase_setup.sql and supabase_admin_setup.sql scripts before using online pranks.
