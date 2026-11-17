@@ -650,3 +650,181 @@ footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 
   footer { align-items: flex-start; flex-direction: column; }
   .footer-actions { width: 100%; }
 }
+
+
+/* Neon yellow accent pass and entry-screen styling. */
+:root {
+  --arcade-neon: #eaff00;
+  --arcade-neon-soft: #d8f000;
+  --arcade-neon-border: #aabf00;
+}
+.brand, .balance, .content h1, .classic-panel h2, .game-card strong,
+.profile-stat-card strong, .rps-move-word, .prank-popup-tag,
+.account-panel h2, .trivia-earned {
+  color: var(--arcade-neon);
+}
+.brand { text-shadow: 0 0 12px rgba(234, 255, 0, .13); }
+.tab.active, .quick-launch-button.quick-launch-primary, .profile-action-button,
+.number-hunt-button, .trivia-primary, .account-primary-button,
+.leaderboard-status button, .admin-primary-button, .audio-primary-button {
+  background: var(--arcade-neon);
+  border-color: var(--arcade-neon-border);
+  color: #142b26;
+}
+.tab.active { color: #142b26; }
+.quick-launch-button:hover, .quick-launch-button:focus-visible,
+.game-card:hover, .game-card:focus-visible,
+.footer-actions button:hover, .footer-actions button:focus-visible,
+.classic-back-button:hover {
+  border-color: var(--arcade-neon);
+}
+.trophy-list li::before { color: var(--arcade-neon); }
+.entry-shell { max-width: 980px; }
+.entry-status { color: #c6d8cc; font-size: 12px; }
+.entry-content {
+  display: flex;
+  min-height: 0;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(22px, 5vw, 48px) 16px;
+}
+.entry-content .account-page { width: 100%; max-width: 620px; }
+.entry-content .account-page-heading { text-align: center; }
+.entry-content .account-page-heading .eyebrow { color: var(--arcade-neon); }
+.entry-content .account-panel { border-color: #4c7060; background: #1d4036; }
+.entry-content .auth-form-wrap { margin-top: 6px; }
+.entry-loading { color: #dce7dc; text-align: center; font-size: 14px; }
+.guest-mode-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px auto 0;
+  color: #a9c1b3;
+  font-size: 12px;
+}
+.guest-mode-button {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid #5c7a6c;
+  border-radius: 0;
+  background: #294b40;
+  color: #e6efe6;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.guest-mode-button:hover, .guest-mode-button:focus-visible {
+  border-color: var(--arcade-neon);
+  color: var(--arcade-neon);
+  outline: none;
+}
+.entry-shell footer { justify-content: center; text-align: center; }
+.entry-shell .connection-form input, .entry-shell .auth-form-wrap input { min-height: 46px; }
+.memory-page, .pattern-page { max-width: 900px; margin: 0 auto; }
+.skill-game-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.skill-game-heading .muted { margin: 0; }
+.skill-game-card {
+  padding: clamp(18px, 4vw, 30px);
+  border: 1px solid #466b5b;
+  background: #1d4036;
+  text-align: center;
+}
+.skill-game-card h2 { margin: 0 0 8px; color: var(--arcade-neon); font-size: 20px; }
+.skill-game-card p { color: #cbd9d0; font-size: 13px; line-height: 1.5; }
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 640px;
+  margin: 22px auto 0;
+}
+.memory-card {
+  min-height: 82px;
+  border: 1px solid #466b5b;
+  border-radius: 0;
+  background: #294b40;
+  color: #f0f3e9;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+.memory-card.is-visible, .memory-card.is-matched {
+  border-color: var(--arcade-neon-border);
+  background: #344e37;
+  color: var(--arcade-neon);
+}
+.memory-card:disabled { cursor: default; opacity: 1; }
+.memory-card:focus-visible, .pattern-pad button:focus-visible {
+  outline: 2px solid var(--arcade-neon);
+  outline-offset: 2px;
+}
+.skill-game-status {
+  min-height: 26px;
+  margin: 16px auto 0;
+  color: #e7ebdf;
+  font-size: 13px;
+}
+.skill-game-meta {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 12px;
+  color: #bacdc0;
+  font-size: 12px;
+}
+.skill-game-meta strong { color: var(--arcade-neon); }
+.pattern-display {
+  min-height: 72px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px auto;
+  padding: 12px;
+  border: 1px solid #466b5b;
+  background: #294b40;
+  color: var(--arcade-neon);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+.pattern-pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.pattern-pad button {
+  min-height: 68px;
+  border: 1px solid #466b5b;
+  border-radius: 0;
+  background: #294b40;
+  color: #eef1e7;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pattern-pad button:hover:not(:disabled) {
+  border-color: var(--arcade-neon);
+  color: var(--arcade-neon);
+}
+.pattern-pad button:disabled { opacity: .48; cursor: default; }
+@media (max-width: 600px) {
+  .skill-game-heading { align-items: flex-start; flex-direction: column; }
+  .memory-grid { gap: 7px; }
+  .memory-card { min-height: 64px; font-size: 12px; }
+  .pattern-pad button { min-height: 58px; }
+}
