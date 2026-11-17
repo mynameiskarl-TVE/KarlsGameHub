@@ -41,13 +41,20 @@ Build for the current computer:
 npm run desktop:build
 ```
 
-Build a Windows x64 NSIS installer:
+Build a Windows x64 NSIS installer locally:
 
 ```sh
 npm run desktop:build:win
 ```
 
-Installers and desktop packages are written to `release/`.
+You can also build it in GitHub without setting up Electron Builder locally:
+
+1. Open the repository's **Actions** tab.
+2. Select **Build Mini Arcade Hub Windows installer**.
+3. Choose **Run workflow** on the `main` branch.
+4. When it completes, open the run and download the `Mini-Arcade-Hub-Windows-x64` artifact.
+
+The GitHub artifact is temporary (14-day retention). Installers and desktop packages built locally are written to `release/`.
 
 The Electron window uses context isolation, sandboxing, disabled Node integration, and web security. It does not expose Node APIs to the React page. External HTTPS links are opened in the operating system browser; non-HTTPS and file URLs are blocked.
 
