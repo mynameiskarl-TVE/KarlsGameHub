@@ -10,6 +10,7 @@ const FIELD_MAP = {
   numberHuntWins: "number_hunt_wins",
   rpsGames: "rps_games",
   rpsWins: "rps_wins",
+  rpsTies: "rps_ties",
   triviaGames: "trivia_games",
   triviaCorrect: "trivia_correct",
   dailyLogins: "daily_logins",
