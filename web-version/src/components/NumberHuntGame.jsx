@@ -9,7 +9,7 @@ import {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function NumberHuntGame({ balance, onEarnPoints }) {
+export default function NumberHuntGame({ balance, onEarnPoints, onGameResult }) {
   const [game, setGame] = React.useState(null);
   const [guess, setGuess] = React.useState("");
   const [message, setMessage] = React.useState("Start a round to get a secret number.");
@@ -31,6 +31,9 @@ export default function NumberHuntGame({ balance, onEarnPoints }) {
 
       if (next.result.outcome === "win") {
         onEarnPoints(next.result.reward);
+        onGameResult?.({ game: "numberHunt", outcome: "win" });
+      } else if (next.result.outcome === "out_of_guesses") {
+        onGameResult?.({ game: "numberHunt", outcome: "loss" });
       }
       setMessage(next.result.message);
     } catch (error) {
