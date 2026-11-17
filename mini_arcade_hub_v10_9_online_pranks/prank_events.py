@@ -218,7 +218,7 @@ class PrankEventsMixin:
             return False
 
     def _position_confetti_overlay(self):
-        """Position once at playback start; do not force layout on every frame."""
+        """Size the transparent overlay to the game window and tile the cached effect."""
         overlay = getattr(self, "_confetti_overlay", None)
         canvas = getattr(self, "_confetti_canvas", None)
         if not overlay or not canvas or not overlay.winfo_exists():
@@ -228,6 +228,33 @@ class PrankEventsMixin:
             width, height = max(1, self.root.winfo_width()), max(1, self.root.winfo_height())
             overlay.geometry(f"{width}x{height}+{x}+{y}")
             canvas.configure(width=width, height=height)
+            # Tk reports the old 1x1 canvas size until geometry has been processed.
+            # This is done once per celebration, never inside the animation loop.
+            overlay.update_idletasks()
+
+            photos = getattr(self, "_confetti_photos", [])
+            if not photos:
+                return
+            tile_width, tile_height = photos[0].width(), photos[0].height()
+            columns = max(1, (width + tile_width - 1) // tile_width)
+            rows = max(1, (height + tile_height - 1) // tile_height)
+            positions = [
+                (column * tile_width, row * tile_height)
+                for row in range(rows) for column in range(columns)
+            ]
+
+            items = getattr(self, "_confetti_canvas_items", None)
+            if items is None or len(items) != len(positions):
+                canvas.delete("confetti_tile")
+                items = []
+                for px, py in positions:
+                    items.append(canvas.create_image(
+                        px, py, image=photos[0], anchor="nw", tags="confetti_tile"
+                    ))
+                self._confetti_canvas_items = items
+            else:
+                for item, (px, py) in zip(items, positions):
+                    canvas.coords(item, px, py)
         except tk.TclError:
             pass
 
@@ -243,13 +270,9 @@ class PrankEventsMixin:
             return
         try:
             photo = photos[index]
-            if self._confetti_canvas_item is None:
-                self._confetti_canvas_item = self._confetti_canvas.create_image(
-                    self._confetti_canvas.winfo_width() // 2,
-                    self._confetti_canvas.winfo_height() // 2,
-                    image=photo, anchor="center")
-            else:
-                self._confetti_canvas.itemconfigure(self._confetti_canvas_item, image=photo)
+            items = getattr(self, "_confetti_canvas_items", [])
+            for item in items:
+                self._confetti_canvas.itemconfigure(item, image=photo)
             delay = self._confetti_durations[index]
             self._confetti_index = index + 1
             self._confetti_after_id = self.root.after(delay, self._animate_confetti_frame)
