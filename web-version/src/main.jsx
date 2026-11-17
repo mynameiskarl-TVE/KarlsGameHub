@@ -432,9 +432,11 @@ function App() {
 
   const signedInUsername = getLegacyUsername(session?.user) || "Player";
   const isCloudLoading =
-    Boolean(session?.user?.id) &&
-    profileLoadedForUser !== session.user.id &&
-    !moderationStatus.suspended;
+    Boolean(supabaseClient) &&
+    (!authReady ||
+      (Boolean(session?.user?.id) &&
+        profileLoadedForUser !== session.user.id &&
+        !moderationStatus.suspended));
 
   return (
     <main className="app-shell">
@@ -540,7 +542,7 @@ function App() {
         {/* Keep games mounted when switching tabs, so active rounds are preserved. */}
         <div hidden={active !== "Number Hunt"}>
           {isCloudLoading ? (
-            <div className="cloud-loading-screen" role="status">Loading your account save. Games will be ready in a moment…</div>
+            <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
             <NumberHuntGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
           )}
