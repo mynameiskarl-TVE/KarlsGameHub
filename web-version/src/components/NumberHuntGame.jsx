@@ -9,7 +9,7 @@ import {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function NumberHuntGame({ balance, onEarnPoints, onGameResult, rewardAmount = 20 }) {
+export default function NumberHuntGame({ balance, onSpendPoints, onEarnPoints, onGameResult, rewardAmount = 20 }) {
   const [game, setGame] = React.useState(null);
   const [guess, setGuess] = React.useState("");
   const [message, setMessage] = React.useState("Start a round to get a secret number.");
@@ -24,6 +24,7 @@ export default function NumberHuntGame({ balance, onEarnPoints, onGameResult, re
     event.preventDefault();
     if (!game?.active) return;
 
+    if (balance < 2 || !onSpendPoints?.(2)) { setMessage("You need at least 2 points to make another guess."); return; }
     try {
       const next = submitNumberGuess(game, guess);
       setGame(next);
@@ -37,6 +38,7 @@ export default function NumberHuntGame({ balance, onEarnPoints, onGameResult, re
       }
       setMessage(next.result.message);
     } catch (error) {
+      onEarnPoints(2);
       setMessage(error instanceof Error ? error.message : "Your guess could not be checked.");
     }
   }
@@ -128,7 +130,7 @@ export default function NumberHuntGame({ balance, onEarnPoints, onGameResult, re
         </div>
         <div>
           <strong>Reward</strong>
-          <p>{`Find the number to earn ${formatPoints(rewardAmount)} points. There is no entry cost and incorrect guesses never remove points.`}</p>
+          <p>{`Find the number to earn ${formatPoints(rewardAmount)} points. Each guess costs 2 points, whether correct or not.`}</p>
         </div>
       </div>
     </section>
