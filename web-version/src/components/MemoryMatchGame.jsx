@@ -31,7 +31,8 @@ export default function MemoryMatchGame({ balance, onSpendPoints, onEarnPoints, 
   function turnCard(index) {
     if (locked || complete || matched.includes(index) || flipped.includes(index)) return;
 
-    if (flipped.length === 1 && (balance < 2 || !onSpendPoints?.(2))) { setMessage("You need 2 points to turn over another pair."); return; }
+    if (balance < 2) { setMessage("You need at least 2 points to make a pair attempt."); return; }
+    if (flipped.length === 1 && !onSpendPoints?.(2)) { setMessage("You need 2 points to turn over another pair."); return; }
     const nextFlipped = flipped.concat(index);
     setFlipped(nextFlipped);
     if (nextFlipped.length !== 2) return;
