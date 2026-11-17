@@ -4,6 +4,7 @@ import { spinSlots } from "../games/slots/engine.js";
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
 export default function SlotMachineGame({ balance, freePlay = false, onSpendPoints, onEarnPoints, onGameResult }) {
+  const [freePlayMode, setFreePlayMode] = React.useState(false);
   const [spinning, setSpinning] = React.useState(false);
   const [result, setResult] = React.useState(null);
   const [spins, setSpins] = React.useState(0);
@@ -15,11 +16,11 @@ export default function SlotMachineGame({ balance, freePlay = false, onSpendPoin
   function handleSpin() {
     if (spinning) return;
     const stake = Number(bet);
-    if (!freePlay && (!Number.isSafeInteger(stake) || stake < 1 || stake > balance)) {
+    if (!freePlayMode && (!Number.isSafeInteger(stake) || stake < 1 || stake > balance)) {
       setResult({ error: "Choose a whole-number stake within your available coin balance." });
       return;
     }
-    if (!freePlay && !onSpendPoints?.(stake)) {
+    if (!freePlayMode && !onSpendPoints?.(stake)) {
       setResult({ error: "You do not have enough coins for that stake." });
       return;
     }
@@ -27,8 +28,8 @@ export default function SlotMachineGame({ balance, freePlay = false, onSpendPoin
     setResult(null);
     timer.current = window.setTimeout(() => {
       const next = spinSlots();
-      const payout = freePlay ? 0 : Math.floor(stake * next.payoutMultiplier);
-      setResult({ ...next, payout, stake: freePlay ? 0 : stake });
+      const payout = freePlayMode ? 0 : Math.floor(stake * next.payoutMultiplier);
+      setResult({ ...next, payout, stake: freePlayMode ? 0 : stake });
       setSpins((value) => value + 1);
       setSpinning(false);
       timer.current = null;
@@ -47,12 +48,13 @@ export default function SlotMachineGame({ balance, freePlay = false, onSpendPoin
     </div>
     <div className="slots-cabinet">
       <div className="slots-marquee">MINI ARCADE</div>
-      {!freePlay && <div className="arcade-bet-controls">
+      {freePlay && <label className="tester-freeplay-toggle"><input type="checkbox" checked={freePlayMode} onChange={(event) => setFreePlayMode(event.target.checked)} /> <span>Free play mode <small>No coins spent or awarded</small></span></label>}
+      {!freePlayMode && <div className="arcade-bet-controls">
         <label htmlFor="slots-bet">Stake per spin</label>
         <input id="slots-bet" type="number" min="1" max={balance} step="1" value={bet} onChange={(event) => setBet(event.target.value)} />
         <span>Available: {formatPoints(balance)} coins</span>
       </div>}
-      {freePlay && <p className="tester-freeplay-note">TESTER MODE · No coins are spent or awarded</p>}
+      {freePlayMode && <p className="tester-freeplay-note">TESTER MODE · No coins are spent or awarded</p>}
       <div className="slot-reels" aria-live="polite" aria-label={spinning ? "Reels spinning" : "Slot result"}>
         {(result?.reels || (spinning ? ["?", "?", "?"] : ["7", "BAR", "♦"])).map((symbol, index) => <div className={"slot-reel " + (spinning ? "is-spinning" : "")} key={index}>{symbol}</div>)}
       </div>
@@ -63,8 +65,8 @@ export default function SlotMachineGame({ balance, freePlay = false, onSpendPoin
       <p className="slot-result-message" role="status" aria-live="polite">
         {spinning ? "Spinning…" : result?.error || (result ? (result.payout ? result.outcome === "jackpot" ? "JACKPOT — returned " + formatPoints(result.payout) + " coins!" : "Matching symbols — returned " + formatPoints(result.payout) + " coins!" : "No match — your " + formatPoints(result.stake) + " coin stake was lost.") : "Ready when you are. Choose a stake to spin.")}
       </p>
-      <button className="arcade-primary-button slot-spin-button" type="button" onClick={handleSpin} disabled={spinning || !canAffordBet}>{spinning ? "Spinning…" : freePlay ? "Spin (tester free play)" : "Spin"}</button>
-      <div className="blackjack-round-note">Spins: {spins} · {freePlay ? "Tester free play" : "Stake-based play"}</div>
+      <button className="arcade-primary-button slot-spin-button" type="button" onClick={handleSpin} disabled={spinning || !canAffordBet}>{spinning ? "Spinning…" : freePlayMode ? "Spin (tester free play)" : "Spin"}</button>
+      <div className="blackjack-round-note">Spins: {spins} · {freePlayMode ? "Tester free play" : "Stake-based play"}</div>
     </div>
   </section>;
 }
