@@ -61,8 +61,14 @@ export default function AuthPanel({
       const email = usernameToAuthEmail(normalizedUsername);
 
       if (mode === "register") {
-        if (password.length < 12) {
-          throw new Error("New passwords must be at least 12 characters long.");
+        if (
+          password.length < 12 ||
+          !/[a-z]/.test(password) ||
+          !/[A-Z]/.test(password) ||
+          !/[0-9]/.test(password) ||
+          !/[^A-Za-z0-9]/.test(password)
+        ) {
+          throw new Error("Use at least 12 characters, including uppercase and lowercase letters, a number, and a symbol.");
         }
 
         const { data, error } = await client.auth.signUp({
@@ -243,7 +249,7 @@ export default function AuthPanel({
                   </button>
                 </form>
                 <p className="account-security-note">
-                  Usernames use 3–20 letters, numbers or underscores. New passwords must be at least 12 characters.
+                  Usernames use 3–20 letters, numbers or underscores. New passwords need at least 12 characters, uppercase and lowercase letters, a number, and a symbol.
                   This username-only setup does not have email-based password recovery.
                 </p>
               </div>
