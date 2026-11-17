@@ -18,6 +18,11 @@ export async function uploadPlayerCloudSave(client, userId, profile, existingSav
   if (!client || !userId) throw new TypeError("A signed-in player is required.");
 
   const saveData = mergeProfileIntoLegacySave(profile, existingSave);
+  const encodedSize = new TextEncoder().encode(JSON.stringify(saveData)).byteLength;
+  if (encodedSize > 65_536) {
+    throw new RangeError("This save is too large to upload. Reduce the saved activity history and try again.");
+  }
+
   const { error } = await client
     .from("player_saves")
     .upsert(
@@ -34,10 +39,8 @@ function safeCounter(value) {
   return Number.isSafeInteger(parsed) && parsed >= 0 ? Math.min(parsed, 1_000_000_000) : 0;
 }
 
-export async function syncPlayerLeaderboard(client, userId, profile, existingSave = {}) {
+export async function syncPlayerLeaderboard(client, userId, profile) {
   if (!client || !userId) throw new TypeError("A signed-in player is required.");
-
-  const saveData = mergeProfileIntoLegacySave(profile, existingSave);
 
   // Only sync the non-wagering web game's public profile fields. Older
   // win totals from retired desktop-only games remain untouched.
@@ -48,7 +51,9 @@ export async function syncPlayerLeaderboard(client, userId, profile, existingSav
       points: safeCounter(profile.balance),
       trivia_correct: safeCounter(profile.stats?.triviaCorrect),
     })
-    .eq("user_id", userId);  if (error) throw error;
+    .eq("user_id", userId);
+
+  if (error) throw error;
 }
 
 export async function fetchPlayerModerationStatus(client) {
