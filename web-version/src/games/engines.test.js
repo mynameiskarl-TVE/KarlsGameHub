@@ -5,6 +5,7 @@ import {
   handValue,
   startBlackjackRound,
   standBlackjack,
+  splitBlackjack,
 } from "./blackjack/engine.js";
 import { spinSlots } from "./slots/engine.js";
 import { flipCoin } from "./coin-flip/engine.js";
@@ -32,6 +33,33 @@ test("Blackjack deals from one 52-card deck without duplicate cards", () => {
   ];
   assert.equal(cards.length, 52);
   assert.equal(new Set(cards.map((card) => card.rank + card.suit)).size, 52);
+});
+
+test("Blackjack can split equal-value face and number cards", () => {
+  const round = {
+    deck: [
+      { rank: "4", suit: "♠" },
+      { rank: "6", suit: "♥" },
+    ],
+    hands: [[
+      { rank: "10", suit: "♣" },
+      { rank: "K", suit: "♦" },
+    ]],
+    dealer: [
+      { rank: "8", suit: "♣" },
+      { rank: "7", suit: "♠" },
+    ],
+    handStatus: ["playing"],
+    activeHand: 0,
+    splitUsed: false,
+    phase: "playing",
+    outcomes: [],
+    reward: 0,
+    result: null,
+  };
+  const nextRound = splitBlackjack(round);
+  assert.equal(nextRound.hands.length, 2);
+  assert.equal(nextRound.splitUsed, true);
 });
 
 test("Blackjack stand settles an active round", () => {
