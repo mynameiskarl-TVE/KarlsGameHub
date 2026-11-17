@@ -128,7 +128,7 @@ export default function NumberHuntGame({ balance, onEarnPoints, onGameResult, re
         </div>
         <div>
           <strong>Reward</strong>
-          <p>Find the number to earn ${formatPoints(rewardAmount)} points. There is no entry cost and incorrect guesses never remove points.</p>
+          <p>{`Find the number to earn ${formatPoints(rewardAmount)} points. There is no entry cost and incorrect guesses never remove points.`}</p>
         </div>
       </div>
     </section>
