@@ -7,6 +7,8 @@ import AdminPanel from "./components/AdminPanel.jsx";
 import NumberHuntGame from "./components/NumberHuntGame.jsx";
 import RockPaperScissorsGame from "./components/RockPaperScissorsGame.jsx";
 import TriviaGame from "./components/TriviaGame.jsx";
+import MemoryMatchGame from "./components/MemoryMatchGame.jsx";
+import PatternRecallGame from "./components/PatternRecallGame.jsx";
 import {
   claimDailyReward,
   defaultProfile,
@@ -92,6 +94,7 @@ function App() {
   const [supabaseConfig, setSupabaseConfig] = React.useState(readStoredSupabaseConfig);
   const [supabaseClient, setSupabaseClient] = React.useState(makeInitialSupabaseClient);
   const [session, setSession] = React.useState(null);
+  const [guestMode, setGuestMode] = React.useState(false);
   const [authReady, setAuthReady] = React.useState(false);
   const [profileLoadedForUser, setProfileLoadedForUser] = React.useState("");
   const [cloudStatus, setCloudStatus] = React.useState("Sign in to enable cloud saves.");
@@ -156,6 +159,7 @@ function App() {
 
       sessionRef.current = nextSession;
       setSession(nextSession);
+      if (nextUserId) setGuestMode(false);
       setAuthReady(true);
 
       if (nextUserId && nextUserId !== previousUserId) {
@@ -547,7 +551,7 @@ function App() {
     });
   }, [today, profile.lastDailyReward]);
   const totalGamesPlayed =
-    stats.numberHuntGames + stats.rpsGames + stats.triviaGames;
+    stats.numberHuntGames + stats.rpsGames + stats.triviaGames + stats.memoryGames + stats.patternGames;
 
   function awardPoints(amount) {
     if (!Number.isSafeInteger(amount) || amount <= 0) return;
@@ -578,6 +582,12 @@ function App() {
         if (Number.isSafeInteger(result.correctAnswers) && result.correctAnswers >= 0) {
           increment("triviaCorrect", Math.min(5, result.correctAnswers));
         }
+      } else if (result.game === "memory") {
+        increment("memoryGames");
+        if (result.outcome === "win") increment("memoryWins");
+      } else if (result.game === "pattern") {
+        increment("patternGames");
+        if (result.outcome === "win") increment("patternWins");
       } else {
         return current;
       }
@@ -670,6 +680,46 @@ function App() {
     }
   }, [active, isAdminForCurrentUser]);
 
+  if (!authReady) {
+    return (
+      <main className="app-shell entry-shell">
+        <header className="topbar">
+          <div className="brand">MINI ARCADE</div>
+          <span className="entry-status">Account access</span>
+        </header>
+        <div className="announcement">Restoring your saved sign-in session…</div>
+        <section className="content entry-content">
+          <div className="entry-loading" role="status">Please wait while your account is checked.</div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!session?.user && !guestMode) {
+    return (
+      <main className="app-shell entry-shell">
+        <header className="topbar">
+          <div className="brand">MINI ARCADE</div>
+          <span className="entry-status">Account access</span>
+        </header>
+        <div className="announcement">Welcome to Mini Arcade. Sign in to sync your progress, or continue as a guest.</div>
+        <section className="content entry-content">
+          <AuthPanel
+            client={supabaseClient}
+            config={supabaseConfig}
+            session={null}
+            cloudStatus={cloudStatus}
+            onSaveConfig={saveConnection}
+            onSignOut={signOut}
+            onRetryCloud={retryCloudSync}
+            onGuestMode={() => setGuestMode(true)}
+          />
+        </section>
+        <footer><span>Guest progress stays on this device and does not appear on the shared leaderboard.</span></footer>
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -688,7 +738,7 @@ function App() {
           aria-label="Open account settings"
         >
           <span className="balance">{formatPoints(balance)} pts</span>
-          <span className="profile-name">{session?.user ? "Signed in as " + signedInUsername : "Signed in as " + profile.nickname}</span>
+          <span className="profile-name">{session?.user ? "Signed in as " + signedInUsername : "Guest mode"}</span>
         </button>
       </header>
 
@@ -725,7 +775,7 @@ function App() {
               </article>
               <article className="classic-panel arcade-summary-panel">
                 <h2>YOUR ARCADE</h2>
-                <p>Your personal {session?.user ? "cloud-synced" : "local"} progress.</p>
+                <p>Your personal {session?.user ? "cloud-synced" : "guest"} progress.</p>
                 <ul className="arcade-summary-list">
                   <li>Blackjack wins: {formatPoints(stats.blackjackWins || 0)}</li>
                   <li>Mini-game wins: {formatPoints(stats.numberHuntWins + stats.rpsWins)}</li>
@@ -780,6 +830,8 @@ function App() {
               {gameCard("Number Hunt", "Find the secret number in five guesses", "Number Hunt")}
               {gameCard("Rock Paper Scissors", "Play against the computer", "Rock Paper Scissors")}
               {gameCard("Quick Trivia", "Answer five randomly selected questions", "Trivia")}
+              {gameCard("Memory Match", "Find all matching pairs", "Memory Match")}
+              {gameCard("Pattern Recall", "Remember and repeat the sequence", "Pattern Recall")}
             </div>
           </>
         )}
@@ -808,6 +860,14 @@ function App() {
           ) : (
             <TriviaGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} rewardPerCorrect={profile.triviaReward} />
           )}
+        </div>
+        <div hidden={active !== "Memory Match"}>
+          {active === "Memory Match" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
+          <MemoryMatchGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+        </div>
+        <div hidden={active !== "Pattern Recall"}>
+          {active === "Pattern Recall" && <button className="classic-back-button" type="button" onClick={() => setActive("Arcade games")}>Back to Arcade Games</button>}
+          <PatternRecallGame balance={balance} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
         </div>
 
         {active === "Profile & stats" && (
@@ -845,6 +905,8 @@ function App() {
               {statCard("NUMBER HUNT", `${stats.numberHuntWins} / ${stats.numberHuntGames}`, "Wins / completed games")}
               {statCard("RPS WINS", formatPoints(stats.rpsWins), `${stats.rpsGames} games · ${stats.rpsTies} ties`)}
               {statCard("TRIVIA", formatPoints(stats.triviaCorrect), `Correct answers across ${stats.triviaGames} quizzes`)}
+              {statCard("MEMORY MATCH", formatPoints(stats.memoryWins), `Wins across ${stats.memoryGames} rounds`)}
+              {statCard("PATTERN RECALL", formatPoints(stats.patternWins), `Wins across ${stats.patternGames} rounds`)}
               {statCard("DAILY REWARDS", formatPoints(stats.dailyLogins), "Days claimed on this device")}
               {statCard("DAILY BONUS", `${formatPoints(profile.dailyReward)} pts`, "Reward amount from your save")}
               {statCard("GAME REWARDS", `${profile.numberReward} / ${profile.rpsReward} / ${profile.triviaReward}`, "Number Hunt / RPS / Trivia")}
