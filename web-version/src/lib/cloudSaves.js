@@ -38,27 +38,17 @@ export async function syncPlayerLeaderboard(client, userId, profile, existingSav
   if (!client || !userId) throw new TypeError("A signed-in player is required.");
 
   const saveData = mergeProfileIntoLegacySave(profile, existingSave);
-  const blackjackWins = safeCounter(saveData.blackjack_wins);
-  const miniGameWins =
-    safeCounter(saveData.coin_flip_wins) +
-    safeCounter(saveData.number_hunt_wins) +
-    safeCounter(saveData.rps_wins) +
-    safeCounter(saveData.slot_wins);
-  const totalWins = blackjackWins + miniGameWins;
 
+  // Only sync the non-wagering web game's public profile fields. Older
+  // win totals from retired desktop-only games remain untouched.
   const { error } = await client
     .from("leaderboard")
     .update({
       nickname: profile.nickname,
       points: safeCounter(profile.balance),
-      total_wins: Math.min(1_000_000_000, totalWins),
-      blackjack_wins: blackjackWins,
-      mini_game_wins: Math.min(1_000_000_000, miniGameWins),
       trivia_correct: safeCounter(profile.stats?.triviaCorrect),
     })
-    .eq("user_id", userId);
-
-  if (error) throw error;
+    .eq("user_id", userId);  if (error) throw error;
 }
 
 export async function fetchPlayerModerationStatus(client) {
