@@ -1,16 +1,39 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import NumberHuntGame from "./components/NumberHuntGame.jsx";
+import RockPaperScissorsGame from "./components/RockPaperScissorsGame.jsx";
+import TriviaGame from "./components/TriviaGame.jsx";
 import "./style.css";
 
-const tabs = ["Home", "Number Hunt", "Arcade games", "Profile & stats", "Leaderboard"];
+const tabs = [
+  "Home",
+  "Arcade games",
+  "Number Hunt",
+  "Rock Paper Scissors",
+  "Trivia",
+  "Profile & stats",
+  "Leaderboard",
+];
+
+const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
 function App() {
   const [active, setActive] = React.useState("Home");
   const [balance, setBalance] = React.useState(500);
 
   function awardPoints(amount) {
+    if (!Number.isSafeInteger(amount) || amount <= 0) return;
     setBalance((current) => current + amount);
+  }
+
+  function gameCard(title, description, icon, tab) {
+    return (
+      <button className="game-card" type="button" key={title} onClick={() => setActive(tab)}>
+        <span className="game-icon" aria-hidden="true">{icon}</span>
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </button>
+    );
   }
 
   return (
@@ -25,7 +48,7 @@ function App() {
           MINI ARCADE
         </button>
         <div className="account-area">
-          <span className="balance">{new Intl.NumberFormat("en-US").format(balance)} pts</span>
+          <span className="balance">{formatPoints(balance)} pts</span>
           <button
             className="small-button"
             type="button"
@@ -63,50 +86,61 @@ function App() {
             <div className="cards">
               <article className="card">
                 <h2>YOUR BALANCE</h2>
-                <p>Your current arcade balance is {new Intl.NumberFormat("en-US").format(balance)} points.</p>
+                <p>Your current arcade balance is {formatPoints(balance)} points.</p>
                 <span className="pill">Fictional points</span>
               </article>
               <article className="card">
                 <h2>ARCADE PROGRESS</h2>
-                <p>Number Hunt is now playable. More games, profiles and cloud saves are being migrated.</p>
-                <span className="pill">Web edition</span>
+                <p>Number Hunt, Rock Paper Scissors and Trivia are now playable in the web edition.</p>
+                <span className="pill">3 games available</span>
               </article>
             </div>
             <h2 className="section-heading">Jump back in</h2>
             <div className="game-grid">
-              <button className="game-card" onClick={() => setActive("Number Hunt")}>
-                <span className="game-icon">🔎</span>
-                <strong>Number Hunt</strong>
-                <small>Find the secret number</small>
-              </button>
-              <button className="game-card" onClick={() => setActive("Arcade games")}>
-                <span className="game-icon">🎮</span>
-                <strong>Arcade games</strong>
-                <small>More games to explore</small>
-              </button>
-              <button className="game-card" onClick={() => setActive("Leaderboard")}>
-                <span className="game-icon">🏆</span>
-                <strong>Leaderboard</strong>
-                <small>See the standings</small>
-              </button>
+              {gameCard("Number Hunt", "Find the secret number", "🔎", "Number Hunt")}
+              {gameCard("Rock Paper Scissors", "Choose your move", "✊", "Rock Paper Scissors")}
+              {gameCard("Quick Trivia", "Try five questions", "❔", "Trivia")}
             </div>
-            <p className="session-note">Points are temporary in this early web version and will reset when the page reloads. Account saves are a later migration step.</p>
           </>
         )}
 
-        {/* Keep the game mounted while changing tabs so an active round is preserved. */}
+        {active === "Arcade games" && (
+          <>
+            <h1>Arcade Games</h1>
+            <p className="muted">Choose a game to play. More of the original collection will be added here.</p>
+            <div className="game-grid arcade-game-grid">
+              {gameCard("Number Hunt", "Find the secret number in five guesses", "🔎", "Number Hunt")}
+              {gameCard("Rock Paper Scissors", "Play against the computer", "✊", "Rock Paper Scissors")}
+              {gameCard("Quick Trivia", "Answer five randomly selected questions", "❔", "Trivia")}
+            </div>
+            <p className="session-note">Games with entry bets or point-loss mechanics are not included in this web migration.</p>
+          </>
+        )}
+
+        {/* Keep each game mounted while switching tabs, so active rounds are preserved. */}
         <div hidden={active !== "Number Hunt"}>
           <NumberHuntGame balance={balance} onEarnPoints={awardPoints} />
         </div>
+        <div hidden={active !== "Rock Paper Scissors"}>
+          <RockPaperScissorsGame balance={balance} onEarnPoints={awardPoints} />
+        </div>
+        <div hidden={active !== "Trivia"}>
+          <TriviaGame balance={balance} onEarnPoints={awardPoints} />
+        </div>
 
-        {active !== "Home" && active !== "Number Hunt" && (
+        {active === "Profile & stats" && (
           <div className="placeholder card">
-            <span className="pill">Web migration in progress</span>
-            <h1>{active}</h1>
-            <p>
-              This section has not been migrated yet. The original Python game remains
-              unchanged while the web edition is rebuilt feature by feature.
-            </p>
+            <span className="pill">Coming in a later step</span>
+            <h1>Profile &amp; Stats</h1>
+            <p>Your current session balance is {formatPoints(balance)} points. Account-based profiles, game statistics, and save backup are part of the next migration stage.</p>
+          </div>
+        )}
+
+        {active === "Leaderboard" && (
+          <div className="placeholder card">
+            <span className="pill">Coming in a later step</span>
+            <h1>Leaderboard</h1>
+            <p>The online leaderboard will be connected after the account system and Supabase security checks are migrated.</p>
           </div>
         )}
       </section>
