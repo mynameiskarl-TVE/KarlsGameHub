@@ -35,7 +35,7 @@ function openExternal(rawUrl) {
   const safeUrl = getSafeExternalUrl(rawUrl);
   if (safeUrl) {
     // External pages open in the system browser, never inside the privileged app window.
-    void shell.openExternal(safeUrl);
+    void shell.openExternal(safeUrl).catch(() => { /* Browser launch failures should not crash the app. */ });
   }
 }
 
