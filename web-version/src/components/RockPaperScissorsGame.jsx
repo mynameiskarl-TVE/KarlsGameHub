@@ -9,7 +9,7 @@ const icons = {
 
 const formatPoints = (value) => new Intl.NumberFormat("en-US").format(value);
 
-export default function RockPaperScissorsGame({ balance, onEarnPoints }) {
+export default function RockPaperScissorsGame({ balance, onEarnPoints, onGameResult }) {
   const [lastRound, setLastRound] = React.useState(null);
   const [stats, setStats] = React.useState({ played: 0, wins: 0, ties: 0 });
 
@@ -25,6 +25,7 @@ export default function RockPaperScissorsGame({ balance, onEarnPoints }) {
     }));
 
     if (result.reward > 0) onEarnPoints(result.reward);
+    onGameResult?.({ game: "rps", outcome: result.outcome });
   }
 
   return (
