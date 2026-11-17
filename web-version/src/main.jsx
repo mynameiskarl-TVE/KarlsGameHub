@@ -26,6 +26,7 @@ import {
   uploadPlayerCloudSave,
 } from "./lib/cloudSaves.js";
 import { getLegacyUsername, profileFromLegacySave } from "./profile/legacy.js";
+import { fetchLeaderboard } from "./lib/leaderboard.js";
 import "./style.css";
 
 const tabs = [
@@ -88,6 +89,9 @@ function App() {
     suspended: false,
     reason: "",
   });
+  const [leaderboardRows, setLeaderboardRows] = React.useState([]);
+  const [leaderboardStatus, setLeaderboardStatus] = React.useState("Sign in to view the leaderboard.");
+  const [leaderboardRetry, setLeaderboardRetry] = React.useState(0);
 
   const sessionRef = React.useRef(null);
   const cloudSaveBaseRef = React.useRef({});
@@ -317,6 +321,64 @@ function App() {
     profile,
     moderationStatus.checked,
     moderationStatus.suspended,
+  ]);
+
+  React.useEffect(() => {
+    if (active !== "Leaderboard") return undefined;
+
+    if (!supabaseClient) {
+      setLeaderboardRows([]);
+      setLeaderboardStatus("Connect your Supabase project in Account, then sign in to view the leaderboard.");
+      return undefined;
+    }
+    if (!session?.user?.id) {
+      setLeaderboardRows([]);
+      setLeaderboardStatus("Sign in to view the shared leaderboard.");
+      return undefined;
+    }
+    if (moderationStatus.checked && moderationStatus.suspended) {
+      setLeaderboardRows([]);
+      setLeaderboardStatus("Leaderboard access is unavailable for this suspended account.");
+      return undefined;
+    }
+    if (
+      !authReady ||
+      !moderationStatus.checked ||
+      profileLoadedForUser !== session.user.id
+    ) {
+      setLeaderboardStatus(cloudStatus || "Checking your account before loading the leaderboard…");
+      return undefined;
+    }
+
+    let cancelled = false;
+    setLeaderboardStatus("Loading the leaderboard…");
+
+    fetchLeaderboard(supabaseClient, 50)
+      .then((rows) => {
+        if (cancelled) return;
+        setLeaderboardRows(rows);
+        setLeaderboardStatus(rows.length ? "" : "There are no leaderboard entries yet.");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : "Unknown error";
+        setLeaderboardStatus(`Could not load the leaderboard: ${message.slice(0, 180)}`);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    active,
+    supabaseClient,
+    session?.user?.id,
+    authReady,
+    moderationStatus.checked,
+    moderationStatus.suspended,
+    profileLoadedForUser,
+    cloudRetryNonce,
+    leaderboardRetry,
+    cloudStatus,
   ]);
 
   const balance = profile.balance;
@@ -608,14 +670,78 @@ function App() {
         )}
 
         {active === "Leaderboard" && (
-          <div className="placeholder card">
-            <span className="pill">Next migration step</span>
-            <h1>Leaderboard</h1>
-            <p>The online leaderboard is already being updated by authenticated cloud saves. Its web display is being added next.</p>
-            {session?.user && (
-              <div className="cloud-status" role="status" aria-live="polite">{cloudStatus}</div>
+          <section className="leaderboard-page" aria-labelledby="leaderboard-title">
+            <div className="leaderboard-heading">
+              <div>
+                <span className="eyebrow">ARCADE STANDINGS</span>
+                <h1 id="leaderboard-title">Leaderboard</h1>
+                <p className="muted">Top 50 players, ranked by points and then Trivia correct answers.</p>
+              </div>
+              <button
+                className="leaderboard-refresh"
+                type="button"
+                onClick={() => setLeaderboardRetry((value) => value + 1)}
+                disabled={!session?.user || !supabaseClient}
+              >
+                Refresh
+              </button>
+            </div>
+
+            {!session?.user ? (
+              <div className="leaderboard-empty card">
+                <h2>Sign in to view the leaderboard</h2>
+                <p>The shared standings are only available to signed-in players.</p>
+                <button className="profile-action-button" type="button" onClick={() => setActive("Account")}>
+                  Open account
+                </button>
+              </div>
+            ) : (
+              <>
+                {leaderboardStatus && (
+                  <div className="leaderboard-status" role="status" aria-live="polite">
+                    {leaderboardStatus}
+                    {leaderboardStatus.startsWith("Could not load") && (
+                      <button type="button" onClick={() => setLeaderboardRetry((value) => value + 1)}>
+                        Try again
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {leaderboardRows.length > 0 && (
+                  <div className="leaderboard-table-wrap">
+                    <table className="leaderboard-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Rank</th>
+                          <th scope="col">Player</th>
+                          <th scope="col">Points</th>
+                          <th scope="col">Trivia correct</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboardRows.map((row, index) => (
+                          <tr key={`${row.username}-${index}`}>
+                            <td className="leaderboard-rank">{index + 1}</td>
+                            <td>
+                              <strong>{row.nickname}</strong>
+                              <small>@{row.username}</small>
+                            </td>
+                            <td className="leaderboard-number">{formatPoints(row.points)}</td>
+                            <td className="leaderboard-number">{formatPoints(row.triviaCorrect)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <p className="leaderboard-disclaimer">
+                  Points and Trivia results are currently player-reported through game saves, not independently verified by a server-side scoring system.
+                  They are suitable for casual standings, not a cheat-proof competition.
+                </p>
+              </>
             )}
-          </div>
+          </section>
         )}
 
         {active === "Account" && (
