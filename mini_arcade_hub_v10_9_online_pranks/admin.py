@@ -1,5 +1,8 @@
 """Server-authorized admin console and account role management."""
 import random
+import platform
+import sys
+import time
 from datetime import date
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -203,6 +206,7 @@ class AdminMixin:
             maintenance = tk.Frame(notebook, bg="#202a35", padx=14, pady=12)
             admin_management = tk.Frame(notebook, bg="#202a35", padx=14, pady=12)
             moderation = tk.Frame(notebook, bg="#202a35", padx=14, pady=12)
+            debug_tab = tk.Frame(notebook, bg="#202a35", padx=14, pady=12)
             notebook.add(overview, text="Overview")
             notebook.add(points, text="Points & rewards")
             notebook.add(hub, text="Hub settings")
@@ -211,7 +215,146 @@ class AdminMixin:
             notebook.add(maintenance, text="Maintenance")
             notebook.add(admin_management, text="Admin management")
             notebook.add(moderation, text="Moderation")
+            notebook.add(debug_tab, text="Debugging")
             self.build_moderation_tab(moderation, win)
+
+            # Lightweight diagnostics. The counter measures Tkinter's scheduled
+            # UI tick rate, not the monitor's GPU-rendered FPS.
+            tk.Label(debug_tab, text="GAME DIAGNOSTICS", fg="#9fe4c1", bg="#202a35",
+                     font=("Segoe UI", 13, "bold")).pack(anchor="w")
+            tk.Label(
+                debug_tab,
+                text="Optional performance monitoring for troubleshooting. Monitoring runs only while this tab is open and enabled.",
+                fg="white", bg="#202a35", wraplength=760, justify="left"
+            ).pack(anchor="w", pady=(4, 12))
+
+            debug_stats = tk.LabelFrame(
+                debug_tab, text="Live performance", bg="#202a35", fg="#9fe4c1",
+                padx=14, pady=12
+            )
+            debug_stats.pack(fill="x", pady=(0, 12))
+            fps_value = tk.Label(debug_stats, text="Estimated UI rate: -- ticks/sec",
+                                 fg="#f1dfad", bg="#202a35", font=("Consolas", 18, "bold"))
+            fps_value.pack(anchor="w", pady=(0, 6))
+            delay_value = tk.Label(debug_stats, text="Maximum callback delay: -- ms",
+                                   fg="white", bg="#202a35", font=("Consolas", 11))
+            delay_value.pack(anchor="w")
+            debug_state = tk.Label(debug_stats, text="Monitor stopped",
+                                   fg="#c2cbd3", bg="#202a35")
+            debug_state.pack(anchor="w", pady=(6, 0))
+
+            debug_enabled = tk.BooleanVar(value=False)
+            debug_after_id = None
+            debug_last_tick = None
+            debug_sample_start = None
+            debug_tick_count = 0
+            debug_max_delay = 0.0
+
+            def stop_debug_monitor():
+                nonlocal debug_after_id, debug_last_tick, debug_sample_start
+                nonlocal debug_tick_count, debug_max_delay
+                if debug_after_id is not None:
+                    try:
+                        win.after_cancel(debug_after_id)
+                    except tk.TclError:
+                        pass
+                debug_after_id = None
+                debug_last_tick = None
+                debug_sample_start = None
+                debug_tick_count = 0
+                debug_max_delay = 0.0
+                debug_state.config(text="Monitor stopped")
+                fps_value.config(text="Estimated UI rate: -- ticks/sec")
+                delay_value.config(text="Maximum callback delay: -- ms")
+
+            def debug_tick():
+                nonlocal debug_after_id, debug_last_tick, debug_sample_start
+                nonlocal debug_tick_count, debug_max_delay
+                debug_after_id = None
+                if not win.winfo_exists() or not debug_enabled.get():
+                    return
+                if notebook.select() != str(debug_tab):
+                    debug_state.config(text="Paused while another admin tab is selected")
+                    return
+
+                now = time.perf_counter()
+                if debug_last_tick is not None:
+                    interval = now - debug_last_tick
+                    debug_max_delay = max(debug_max_delay, max(0.0, interval - 0.016) * 1000.0)
+                debug_last_tick = now
+                if debug_sample_start is None:
+                    debug_sample_start = now
+                debug_tick_count += 1
+
+                elapsed = now - debug_sample_start
+                if elapsed >= 1.0:
+                    rate = debug_tick_count / elapsed
+                    fps_value.config(text=f"Estimated UI rate: {rate:5.1f} ticks/sec")
+                    delay_value.config(text=f"Maximum callback delay: {debug_max_delay:5.1f} ms")
+                    debug_state.config(text="Monitoring • higher callback delays can indicate UI stalls")
+                    debug_sample_start = now
+                    debug_tick_count = 0
+                    debug_max_delay = 0.0
+
+                debug_after_id = win.after(16, debug_tick)
+
+            def toggle_debug_monitor():
+                if debug_enabled.get():
+                    stop_debug_monitor()
+                    debug_enabled.set(False)
+                else:
+                    debug_enabled.set(True)
+                    debug_last_tick = None
+                    debug_sample_start = None
+                    debug_tick_count = 0
+                    debug_max_delay = 0.0
+                    debug_state.config(text="Starting monitor…")
+                    debug_tick()
+
+            tk.Checkbutton(
+                debug_tab, text="Enable live performance monitor",
+                variable=debug_enabled, command=toggle_debug_monitor,
+                bg="#202a35", fg="white", selectcolor="#17232e",
+                activebackground="#202a35", activeforeground="white",
+                font=("Segoe UI", 10, "bold")
+            ).pack(anchor="w", pady=(0, 12))
+
+            system_frame = tk.LabelFrame(
+                debug_tab, text="Runtime information", bg="#202a35", fg="#9fe4c1",
+                padx=14, pady=12
+            )
+            system_frame.pack(fill="x")
+            tk.Label(
+                system_frame,
+                text=f"Python: {sys.version.split()[0]}\\nPlatform: {platform.platform()}\\n"
+                     f"Window: {self.root.winfo_width()} × {self.root.winfo_height()}\\n"
+                     f"Connection: {'Online' if self.online_mode else 'Offline'}",
+                fg="white", bg="#202a35", justify="left", font=("Consolas", 10)
+            ).pack(anchor="w")
+
+            def on_admin_tab_changed(_event=None):
+                if not debug_enabled.get():
+                    return
+                if notebook.select() == str(debug_tab):
+                    if debug_after_id is None:
+                        debug_last_tick = None
+                        debug_sample_start = None
+                        debug_tick_count = 0
+                        debug_max_delay = 0.0
+                        debug_tick()
+                else:
+                    if debug_after_id is not None:
+                        try:
+                            win.after_cancel(debug_after_id)
+                        except tk.TclError:
+                            pass
+                        debug_after_id = None
+                    debug_last_tick = None
+                    debug_sample_start = None
+                    debug_tick_count = 0
+                    debug_state.config(text="Paused while another admin tab is selected")
+
+            notebook.bind("<<NotebookTabChanged>>", on_admin_tab_changed, add="+")
 
             tk.Label(
                 admin_management,
@@ -693,6 +836,8 @@ class AdminMixin:
                 self.save()
 
             def close_admin():
+                stop_debug_monitor()
+                debug_enabled.set(False)
                 self.admin_window = None
                 win.destroy()
 
