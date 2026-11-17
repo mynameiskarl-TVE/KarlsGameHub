@@ -17,6 +17,18 @@ function textField(value, maxLength = 200) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+export const PRANK_EVENT_TYPES = [
+  "confetti",
+  "reality_glitch",
+  "nickname_swap",
+  "fake_announcement",
+  "duck_invasion",
+  "fortune",
+  "jumpscare",
+];
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function normalizeAdminRole(data) {
   let role = data;
 
@@ -38,13 +50,14 @@ export async function fetchAdminRole(client) {
 export async function fetchAdminSnapshot(client) {
   if (!client) throw new TypeError("A signed-in administrator is required.");
 
-  const [rolesResult, suspendedResult, auditResult] = await Promise.all([
+  const [rolesResult, suspendedResult, auditResult, onlineResult] = await Promise.all([
     client.rpc("mini_arcade_admin_list_roles", {}),
     client.rpc("mini_arcade_admin_list_suspended", {}),
     client.rpc("mini_arcade_admin_audit_list", {}),
+    client.rpc("mini_arcade_admin_online_players", {}),
   ]);
 
-  for (const result of [rolesResult, suspendedResult, auditResult]) {
+  for (const result of [rolesResult, suspendedResult, auditResult, onlineResult]) {
     if (result.error) throw result.error;
   }
 
@@ -64,6 +77,12 @@ export async function fetchAdminSnapshot(client) {
       targetUsername: textField(row.target_username, 20),
       createdAt: textField(row.created_at, 40),
     })),
+    onlinePlayers: cleanRows(onlineResult.data).map((row) => ({
+      // Kept in memory only for the server-authorized send-prank RPC.
+      userId: typeof row.user_id === "string" ? row.user_id : "",
+      username: textField(row.username, 20),
+      lastSeenAt: textField(row.last_seen_at, 40),
+    })).filter((row) => UUID_PATTERN.test(row.userId) && row.username),
   };
 }
 
@@ -102,5 +121,50 @@ export async function unsuspendPlayer(client, username) {
   const { error } = await client.rpc("mini_arcade_admin_unsuspend_player", {
     p_username: clean,
   });
+  if (error) throw error;
+}
+
+export async function sendOnlinePrank(client, targetUserId, eventType) {
+  if (!client) throw new TypeError("A signed-in administrator is required.");
+  if (typeof targetUserId !== "string" || !UUID_PATTERN.test(targetUserId)) {
+    throw new TypeError("Select a valid online player.");
+  }
+  if (!PRANK_EVENT_TYPES.includes(eventType)) {
+    throw new RangeError("Choose a supported prank event.");
+  }
+
+  const { data, error } = await client.rpc("mini_arcade_admin_send_prank", {
+    p_target_user_id: targetUserId,
+    p_event_type: eventType,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function registerPrankPresence(client, username) {
+  if (!client) throw new TypeError("A signed-in player is required.");
+  const clean = cleanUsername(username);
+  const { error } = await client.rpc("mini_arcade_prank_heartbeat", {
+    p_username: clean,
+  });
+  if (error) throw error;
+}
+
+export async function pollPrankEvents(client) {
+  if (!client) throw new TypeError("A signed-in player is required.");
+  const { data, error } = await client.rpc("mini_arcade_prank_poll", {});
+  if (error) throw error;
+  return cleanRows(data).map((row) => ({
+    eventId: String(row.event_id ?? ""),
+    eventType: textField(row.event_type, 40),
+    payload: row.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
+      ? row.payload
+      : {},
+  })).filter((row) => PRANK_EVENT_TYPES.includes(row.eventType));
+}
+
+export async function leavePrankPresence(client) {
+  if (!client) return;
+  const { error } = await client.rpc("mini_arcade_prank_leave", {});
   if (error) throw error;
 }
