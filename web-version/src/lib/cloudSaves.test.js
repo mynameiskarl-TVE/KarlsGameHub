@@ -88,13 +88,12 @@ test("upserts the account save while preserving unrelated old Python fields", as
 
 test("rejects a cloud save larger than the database's 64 KiB limit before upload", async () => {
   const client = makeClient();
-  const oversized = {
-    ...defaultProfile(),
+  const oversizedLegacySave = {
     activity: ["x".repeat(66_000)],
   };
 
   await assert.rejects(
-    () => uploadPlayerCloudSave(client, "auth-user-id", oversized),
+    () => uploadPlayerCloudSave(client, "auth-user-id", defaultProfile(), oversizedLegacySave),
     /save is too large/
   );
   assert.equal(client.calls.some(call => call.method === "upsert"), false);
