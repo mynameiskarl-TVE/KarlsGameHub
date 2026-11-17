@@ -2,6 +2,7 @@ import React from "react";
 import {
   fetchAdminSnapshot,
   setAdminRole,
+  setFreePlayTester,
   suspendPlayer,
   unsuspendPlayer,
   sendOnlinePrank,
@@ -30,6 +31,8 @@ export default function AdminPanel({ client, role }) {
   const [moderationReason, setModerationReason] = React.useState("");
   const [roleUsername, setRoleUsername] = React.useState("");
   const [roleAction, setRoleAction] = React.useState("admin");
+  const [testerUsername, setTesterUsername] = React.useState("");
+  const [testerAction, setTesterAction] = React.useState("grant");
   const [selectedOnlinePlayer, setSelectedOnlinePlayer] = React.useState("");
   const [selectedPrank, setSelectedPrank] = React.useState("confetti");
 
@@ -100,6 +103,17 @@ export default function AdminPanel({ client, role }) {
       roleAction === "admin"
         ? `Granted administrator access to ${username.toLowerCase()}.`
         : `Removed administrator access from ${username.toLowerCase()}.`
+    );
+  }
+
+  function submitTesterAccess(event) {
+    event.preventDefault();
+    const username = testerUsername.trim();
+    if (!username) { setStatus("Enter a player username first."); return; }
+    const enabled = testerAction === "grant";
+    runAdminAction(
+      () => setFreePlayTester(client, username, enabled),
+      enabled ? "Granted free-play tester access to " + username.toLowerCase() + "." : "Revoked free-play tester access from " + username.toLowerCase() + "."
     );
   }
 
@@ -300,6 +314,33 @@ export default function AdminPanel({ client, role }) {
                     <strong>{row.username}</strong>
                     <span>{row.role.toUpperCase()}</span>
                   </div>
+                  <small>{formatTimestamp(row.createdAt)}</small>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="admin-card">
+          <h2>Free-play tester access</h2>
+          <p>Grant selected accounts tester mode for Blackjack and Slots. Tester mode does not spend or award arcade coins.</p>
+          {isOwner ? (
+            <form className="admin-form admin-role-form" onSubmit={submitTesterAccess}>
+              <label htmlFor="admin-tester-username">Account username</label>
+              <input id="admin-tester-username" value={testerUsername} onChange={(event) => setTesterUsername(event.target.value)} minLength={3} maxLength={20} pattern="[A-Za-z0-9_]{3,20}" autoComplete="off" required />
+              <label htmlFor="admin-tester-action">Tester access</label>
+              <select id="admin-tester-action" value={testerAction} onChange={(event) => setTesterAction(event.target.value)}>
+                <option value="grant">Grant free play</option>
+                <option value="revoke">Remove free play</option>
+              </select>
+              <button className="admin-primary-button" type="submit" disabled={busy}>{testerAction === "grant" ? "Grant tester access" : "Revoke tester access"}</button>
+            </form>
+          ) : <p className="admin-small-note">Only the permanent owner can grant or revoke tester free-play access.</p>}
+          {!snapshot.freePlayTesters?.length ? <p className="admin-empty">No free-play testers have been added.</p> : (
+            <div className="admin-list">
+              {snapshot.freePlayTesters.map((row) => (
+                <article className="admin-list-row" key={row.username}>
+                  <div><strong>{row.username}</strong><span>FREE-PLAY TESTER</span></div>
                   <small>{formatTimestamp(row.createdAt)}</small>
                 </article>
               ))}
