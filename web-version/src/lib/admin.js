@@ -105,6 +105,21 @@ export async function setAdminRole(client, username, role) {
   if (error) throw error;
 }
 
+
+export async function spawnPlayerCoins(client, username, amount) {
+  if (!client) throw new TypeError("A signed-in administrator is required.");
+  const clean = cleanUsername(username);
+  if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000) {
+    throw new RangeError("Enter an amount from 1 to 1,000,000.");
+  }
+  const { data, error } = await client.rpc("mini_arcade_admin_spawn_coins", {
+    p_username: clean,
+    p_amount: amount,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchFreePlayAccess(client) {
   if (!client) return false;
   const { data, error } = await client.rpc("mini_arcade_freeplay_check", {});
