@@ -6,6 +6,7 @@ import {
   fetchAdminSnapshot,
   fetchFreePlayAccess,
   setFreePlayTester,
+  spawnPlayerCoins,
   setAdminRole,
   suspendPlayer,
   unsuspendPlayer,
@@ -84,6 +85,22 @@ test("admin snapshot reads protected server RPCs and returns safe fields for onl
     "mini_arcade_admin_list_suspended",
     "mini_arcade_admin_online_players",
   ]);
+});
+
+
+test("coin spawning validates the amount and calls the admin-only server RPC", async () => {
+  const client = mockClient({
+    mini_arcade_admin_spawn_coins: { data: 750, error: null },
+  });
+  assert.equal(await spawnPlayerCoins(client, "Player_One", 250), 750);
+  assert.deepEqual(client.calls[0], {
+    name: "mini_arcade_admin_spawn_coins",
+    args: { p_username: "player_one", p_amount: 250 },
+  });
+  await assert.rejects(() => spawnPlayerCoins(client, "bad username", 10), /username/);
+  await assert.rejects(() => spawnPlayerCoins(client, "player_one", 0), /1 to 1,000,000/);
+  await assert.rejects(() => spawnPlayerCoins(client, "player_one", 1000001), /1 to 1,000,000/);
+  await assert.rejects(() => spawnPlayerCoins(client, "player_one", 1.5), /1 to 1,000,000/);
 });
 
 test("free-play access is read from the protected current-user RPC", async () => {
