@@ -71,6 +71,22 @@ test("sanitizes malformed values and limits nickname length", () => {
   assert.equal("surprise" in profile.stats, false);
 });
 
+test("sanitizes Blackjack cosmetics and always retains the free starter designs", () => {
+  const profile = sanitizeProfile({
+    ...defaultProfile(),
+    blackjackCosmetics: {
+      ownedTablecloths: ["burgundy", "unknown", "burgundy"],
+      ownedDecks: ["blue", "invalid"],
+      selectedTablecloth: "unknown",
+      selectedDeck: "blue",
+    },
+  });
+  assert.deepEqual(profile.blackjackCosmetics.ownedTablecloths, ["burgundy", "classic-green"]);
+  assert.deepEqual(profile.blackjackCosmetics.ownedDecks, ["blue", "classic"]);
+  assert.equal(profile.blackjackCosmetics.selectedTablecloth, "classic-green");
+  assert.equal(profile.blackjackCosmetics.selectedDeck, "blue");
+});
+
 test("daily reward is credited once per local calendar date", () => {
   const original = defaultProfile();
   const first = claimDailyReward(original, "2026-11-17");
