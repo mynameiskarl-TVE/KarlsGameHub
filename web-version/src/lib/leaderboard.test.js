@@ -21,6 +21,7 @@ test("requests only public profile fields and sorts points then trivia answers",
       username: "player_one",
       nickname: "Player One",
       points: 900,
+      blackjack_wins: 17,
       trivia_correct: 12,
       updated_at: "2026-11-17T12:00:00Z",
       user_id: "should-not-be-requested",
@@ -35,11 +36,12 @@ test("requests only public profile fields and sorts points then trivia answers",
     username: "player_one",
     nickname: "Player One",
     points: 900,
+    blackjackWins: 17,
     triviaCorrect: 12,
     updatedAt: "2026-11-17T12:00:00Z",
   });
   assert.ok(client.calls.some((item) => item.method === "select" &&
-    item.columns === "username,nickname,points,trivia_correct,updated_at"));
+    item.columns === "username,nickname,points,blackjack_wins,trivia_correct,updated_at"));
   assert.deepEqual(
     client.calls.filter((item) => item.method === "order").map((item) => item.column),
     ["points", "trivia_correct"]
@@ -70,6 +72,7 @@ test("normalizes untrusted row values and ignores additional private columns", (
   assert.equal(rows[0].nickname, rows[0].username);
   assert.equal(rows[0].points, 0);
   assert.equal(rows[0].triviaCorrect, 0);
+  assert.equal(rows[0].blackjackWins, 0);
   assert.equal("email" in rows[0], false);
   assert.equal("is_suspended" in rows[0], false);
 });
