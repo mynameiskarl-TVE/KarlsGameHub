@@ -872,7 +872,7 @@ function App() {
         {active === "Blackjack" && (
           isCloudLoading
             ? <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
-            : <BlackjackGame balance={balance} freePlay={Boolean(session?.user?.id && freePlayCheckedForUser === session.user.id && freePlayAccess)} onSpendPoints={spendPoints} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
+            : <BlackjackGame balance={balance} freePlay={Boolean(session?.user?.id && freePlayCheckedForUser === session.user.id && freePlayAccess)} cosmetics={profile.blackjackCosmetics} onCosmeticsChange={(blackjackCosmetics) => setProfile((current) => ({ ...current, blackjackCosmetics }))} onSpendPoints={spendPoints} onEarnPoints={awardPoints} onGameResult={recordGameResult} />
         )}
 
         {active === "Arcade games" && (
