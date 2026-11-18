@@ -3,6 +3,7 @@ import {
   fetchAdminSnapshot,
   setAdminRole,
   setFreePlayTester,
+  spawnPlayerCoins,
   suspendPlayer,
   unsuspendPlayer,
   sendOnlinePrank,
@@ -33,6 +34,9 @@ export default function AdminPanel({ client, role }) {
   const [roleAction, setRoleAction] = React.useState("admin");
   const [testerUsername, setTesterUsername] = React.useState("");
   const [testerAction, setTesterAction] = React.useState("grant");
+  const [coinUsername, setCoinUsername] = React.useState("");
+  const [coinAmount, setCoinAmount] = React.useState("100");
+  const [coinConfirmation, setCoinConfirmation] = React.useState("");
   const [selectedOnlinePlayer, setSelectedOnlinePlayer] = React.useState("");
   const [selectedPrank, setSelectedPrank] = React.useState("confetti");
 
@@ -115,6 +119,25 @@ export default function AdminPanel({ client, role }) {
       () => setFreePlayTester(client, username, enabled),
       enabled ? "Granted free-play tester access to " + username.toLowerCase() + "." : "Revoked free-play tester access from " + username.toLowerCase() + "."
     );
+  }
+
+  function submitCoinSpawn(event) {
+    event.preventDefault();
+    const username = coinUsername.trim();
+    const amount = Number(coinAmount);
+    if (coinConfirmation !== "gambler") {
+      setStatus("Confirmation phrase does not match.");
+      return;
+    }
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000) {
+      setStatus("Enter a whole number from 1 to 1,000,000.");
+      return;
+    }
+    runAdminAction(
+      () => spawnPlayerCoins(client, username, amount),
+      `Added ${amount.toLocaleString()} coins to ${username.toLowerCase()}.`
+    );
+    setCoinConfirmation("");
   }
 
   function performUnsuspend(username) {
@@ -319,6 +342,23 @@ export default function AdminPanel({ client, role }) {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="admin-card">
+          <h2>Coin generator</h2>
+          <p>Add fictional arcade points to a player's account. This action is recorded in the admin activity log.</p>
+          <form className="admin-form" onSubmit={submitCoinSpawn}>
+            <label htmlFor="admin-coin-username">Player username</label>
+            <input id="admin-coin-username" value={coinUsername} onChange={(event) => setCoinUsername(event.target.value)} minLength={3} maxLength={20} pattern="[A-Za-z0-9_]{3,20}" autoComplete="off" required />
+            <label htmlFor="admin-coin-amount">Coins to add (1–1,000,000)</label>
+            <input id="admin-coin-amount" type="number" min="1" max="1000000" step="1" value={coinAmount} onChange={(event) => setCoinAmount(event.target.value)} required />
+            <label htmlFor="admin-coin-confirmation">Type gambler to confirm</label>
+            <input id="admin-coin-confirmation" type="password" value={coinConfirmation} onChange={(event) => setCoinConfirmation(event.target.value)} autoComplete="off" required />
+            <button className="admin-primary-button" type="submit" disabled={busy || coinConfirmation !== "gambler"}>
+              {busy ? "Please wait…" : "Spawn coins"}
+            </button>
+          </form>
+          <p className="admin-small-note">The phrase is an extra local confirmation, not an account password. Supabase independently checks your administrator role before changing any balance.</p>
         </section>
 
         <section className="admin-card">
