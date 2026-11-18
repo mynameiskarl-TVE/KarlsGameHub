@@ -1037,6 +1037,7 @@ function App() {
                           <th scope="col">Rank</th>
                           <th scope="col">Player</th>
                           <th scope="col">Points</th>
+                          <th scope="col">Blackjack wins</th>
                           <th scope="col">Trivia correct</th>
                         </tr>
                       </thead>
@@ -1049,6 +1050,7 @@ function App() {
                               <small>@{row.username}</small>
                             </td>
                             <td className="leaderboard-number">{formatPoints(row.points)}</td>
+                            <td className="leaderboard-number">{formatPoints(row.blackjackWins)}</td>
                             <td className="leaderboard-number">{formatPoints(row.triviaCorrect)}</td>
                           </tr>
                         ))}
