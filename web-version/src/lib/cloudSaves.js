@@ -46,6 +46,11 @@ export async function syncPlayerLeaderboard(client, userId, profile) {
     .eq("user_id", userId);
 
   if (error) throw error;
+
+  // The database reads the saved blackjack counter for this authenticated user
+  // and updates only that user's public leaderboard row.
+  const { error: statsError } = await client.rpc("mini_arcade_sync_blackjack_wins", {});
+  if (statsError) throw statsError;
 }
 
 export async function fetchPlayerModerationStatus(client) {
