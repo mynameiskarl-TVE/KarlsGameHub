@@ -122,6 +122,7 @@ test("leaderboard sync updates only the authenticated player's nickname", async 
   assert.equal("mini_game_wins" in update.row, false);
   assert.equal("total_wins" in update.row, false);
   assert.ok(client.calls.some(item => item.method === "eq" && item.column === "user_id" && item.value === "my-user-id"));
+  assert.ok(client.calls.some(item => item.method === "rpc" && item.name === "mini_arcade_sync_blackjack_wins"));
 });
 
 test("checks moderation status using the authenticated-user-only RPC", async () => {
