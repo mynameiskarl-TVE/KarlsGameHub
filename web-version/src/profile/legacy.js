@@ -74,6 +74,7 @@ export function profileFromLegacySave(saveData, fallbackProfile = defaultProfile
     rpsReward: validReward(firstDefined(saveData, "rps_reward", "rpsReward"), fallback.rpsReward),
     triviaReward: validReward(firstDefined(saveData, "trivia_reward", "triviaReward"), fallback.triviaReward),
     stats: rawStats,
+    blackjackCosmetics: saveData.blackjack_cosmetics ?? fallback.blackjackCosmetics,
   });
 }
 
@@ -91,6 +92,7 @@ export function mergeProfileIntoLegacySave(profile, existingSave = {}) {
   base.number_reward = clean.numberReward;
   base.rps_reward = clean.rpsReward;
   base.trivia_reward = clean.triviaReward;
+  base.blackjack_cosmetics = clean.blackjackCosmetics;
 
   for (const [webKey, legacyKey] of Object.entries(FIELD_MAP)) {
     // Preserve older desktop counters when a fresh/default web profile has not
