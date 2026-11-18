@@ -1,4 +1,4 @@
-# Mini Arcade Hub - security review (v10.3)
+# Mini Arcade Hub - security review (v10.3, plus the v2 hardening below)
 
 ## Verified on a real local Postgres (stand-in Supabase roles; 73 checks, all as expected)
 - Players cannot read, insert, update, or delete the admin-role and audit tables, and cannot grant themselves admin or owner.
@@ -19,6 +19,21 @@
 - Cloud saves are capped at 64 KB. Server-enforced suspension was added. `supabase_security_check.sql` was added.
 - Upload queue no longer grows or floods Supabase on slow connections.
 - Crash fixes: Blackjack Deal, missing imports in `minigames.py` and `admin.py`.
+
+## Security hardening v2 (`supabase_security_hardening_v2.sql`, workflows, `vite.config.js`)
+Tested on a real local Postgres with stand-in Supabase roles: all scripts run in order, v2 run twice, `supabase_security_check.sql` returns zero rows, and 42 behaviour checks pass (run as the `authenticated` and `anon` roles). Not tested against the live Supabase project or in a real browser.
+- Players can edit only `nickname` on the leaderboard. `supabase_setup.sql` used to let them write score columns; v2 and the setup script now match what the live project already allows.
+- A forged save can no longer put a huge score on the leaderboard: leaderboard points and Blackjack wins may rise at most 50 points and 0.25 wins per second since the last sync (at most one hour counts), while falling is always accepted. The limits are the constants at the top of `mini_arcade_sync_blackjack_wins`. A player's own save and gameplay are unchanged.
+- Suspension is enforced by the server for cloud-save writes and leaderboard syncs, not only by the app.
+- The admin coin generator survives a corrupted save balance. Delegated admins can no longer add coins to their own account; the owner still can.
+- The website ships a Content-Security-Policy (GitHub Pages build only).
+- CI no longer regenerates `package-lock.json` or commits it back to `main`; the deploy fails if a shipped (non-dev) dependency has a high-severity advisory.
+
+## Still open after v2
+- Scores are still computed on the player's device, so the speed limit slows cheating but does not prove a score is honest. Real protection needs server-side Blackjack/Slots.
+- Sign-ups are open with no CAPTCHA and the 12-character password rule exists only in the apps. Enabling CAPTCHA in Supabase would break the desktop app unless it is taught to send a token.
+- The owner account is a username and password with no MFA.
+- Every signed-in player can read every other player's internal user id from the leaderboard (the app needs `user_id` to update the nickname).
 
 ## Known limitations (these need a server-authoritative redesign to remove)
 - Points, wins, and the leaderboard are reported by the player's own computer. A player can edit their own save or send their own database requests to change their own points. Suspension lets you respond to a cheater but cannot prevent cheating.

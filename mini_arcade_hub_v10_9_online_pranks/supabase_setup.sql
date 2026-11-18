@@ -47,7 +47,7 @@ create trigger mini_arcade_player_saves_updated_at
 
 -- ---------------------------------------------------------------------------
 -- Shared leaderboard: players can read all rows after sign-in, but may only
--- update their own score/profile fields. The account username is server-created
+-- update their own nickname. The account username is server-created
 -- from the internal Auth identity and is not writable through the client API.
 -- ---------------------------------------------------------------------------
 create table if not exists public.leaderboard (
@@ -72,7 +72,9 @@ create table if not exists public.leaderboard (
 alter table public.leaderboard enable row level security;
 revoke all on table public.leaderboard from anon, authenticated;
 grant select on table public.leaderboard to authenticated;
-grant update (nickname, points, total_wins, blackjack_wins, mini_game_wins, trivia_correct)
+-- Players may edit only their display nickname. Score columns are written by the server
+-- (see supabase_blackjack_leaderboard_setup.sql and supabase_security_hardening_v2.sql).
+grant update (nickname)
     on table public.leaderboard to authenticated;
 
 drop policy if exists "Signed-in players can read leaderboard" on public.leaderboard;

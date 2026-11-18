@@ -36,6 +36,19 @@ where a.attrelid = 'public.leaderboard'::regclass and a.attnum > 0 and not a.att
   and has_column_privilege('authenticated', a.attrelid, a.attnum, 'update')
 
 union all
+select 'players can write a score column directly', a.attname::text
+from pg_attribute a
+where a.attrelid = 'public.leaderboard'::regclass and a.attnum > 0 and not a.attisdropped
+  and a.attname in ('points', 'total_wins', 'blackjack_wins', 'mini_game_wins', 'trivia_correct', 'score_checked_at')
+  and has_column_privilege('authenticated', a.attrelid, a.attnum, 'update')
+
+union all
+select 'save write policy does not check suspension (run supabase_security_hardening_v2.sql)', p.policyname::text
+from pg_policies p
+where p.schemaname = 'public' and p.tablename = 'player_saves' and p.cmd in ('INSERT', 'UPDATE')
+  and coalesce(p.with_check, '') not like '%mini_arcade_caller_is_suspended%'
+
+union all
 select 'more than one owner exists', count(*)::text
 from public.mini_arcade_admin_roles
 where role = 'owner'

@@ -25,10 +25,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Refresh dependency lockfile
-        working-directory: web-version
-        run: npm install --package-lock-only --ignore-scripts
-
       - name: Install dependencies
         working-directory: web-version
         run: npm ci
