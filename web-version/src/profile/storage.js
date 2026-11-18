@@ -8,6 +8,15 @@ export const MAX_BALANCE = 1_000_000_000;
 export const MAX_REWARD = 100_000;
 export const MAX_NICKNAME_LENGTH = 18;
 
+export const BLACKJACK_TABLECLOTHS = ["classic-green", "midnight-blue", "burgundy", "royal-purple"];
+export const BLACKJACK_DECKS = ["classic", "blue", "red", "emerald", "violet"];
+export const DEFAULT_BLACKJACK_COSMETICS = {
+  ownedTablecloths: ["classic-green"],
+  ownedDecks: ["classic"],
+  selectedTablecloth: "classic-green",
+  selectedDeck: "classic",
+};
+
 export const STAT_KEYS = [
   "blackjackGames",
   "blackjackWins",
@@ -40,6 +49,7 @@ export function defaultProfile() {
     numberReward: NUMBER_HUNT_REWARD,
     rpsReward: RPS_REWARD,
     triviaReward: TRIVIA_REWARD,
+    blackjackCosmetics: { ...DEFAULT_BLACKJACK_COSMETICS },
     stats: Object.fromEntries(STAT_KEYS.map((key) => [key, 0])),
   };
 }
@@ -75,6 +85,16 @@ export function sanitizeProfile(value) {
     value.stats && typeof value.stats === "object" && !Array.isArray(value.stats)
       ? value.stats
       : {};
+  const rawCosmetics =
+    value.blackjackCosmetics && typeof value.blackjackCosmetics === "object" && !Array.isArray(value.blackjackCosmetics)
+      ? value.blackjackCosmetics
+      : {};
+  const ownedTablecloths = [...new Set((Array.isArray(rawCosmetics.ownedTablecloths) ? rawCosmetics.ownedTablecloths : DEFAULT_BLACKJACK_COSMETICS.ownedTablecloths).filter((id) => BLACKJACK_TABLECLOTHS.includes(id)))];
+  const ownedDecks = [...new Set((Array.isArray(rawCosmetics.ownedDecks) ? rawCosmetics.ownedDecks : DEFAULT_BLACKJACK_COSMETICS.ownedDecks).filter((id) => BLACKJACK_DECKS.includes(id)))];
+  if (!ownedTablecloths.includes("classic-green")) ownedTablecloths.unshift("classic-green");
+  if (!ownedDecks.includes("classic")) ownedDecks.unshift("classic");
+  const selectedTablecloth = ownedTablecloths.includes(rawCosmetics.selectedTablecloth) ? rawCosmetics.selectedTablecloth : "classic-green";
+  const selectedDeck = ownedDecks.includes(rawCosmetics.selectedDeck) ? rawCosmetics.selectedDeck : "classic";
 
   return {
     nickname: nickname || fallback.nickname,
@@ -84,6 +104,7 @@ export function sanitizeProfile(value) {
     numberReward: safeReward(value.numberReward, fallback.numberReward),
     rpsReward: safeReward(value.rpsReward, fallback.rpsReward),
     triviaReward: safeReward(value.triviaReward, fallback.triviaReward),
+    blackjackCosmetics: { ownedTablecloths, ownedDecks, selectedTablecloth, selectedDeck },
     stats: Object.fromEntries(
       STAT_KEYS.map((key) => [key, safeCount(rawStats[key])])
     ),
