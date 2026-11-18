@@ -163,3 +163,18 @@ existing Settings toggle and volume slider.
 **Setup order for a new or existing project:** `supabase_setup.sql` →
 `supabase_admin_setup.sql` → `supabase_moderation_setup.sql` (if using moderation) →
 `supabase_pranks_setup.sql`. Do not rerun or replace your existing project URL/publishable key.
+
+
+## Admin coin generator (web version)
+
+After the web version's existing player-save and administrator SQL setup is installed, run
+`supabase_coin_generator_setup.sql` in the Supabase SQL Editor. This adds the
+`mini_arcade_admin_spawn_coins` RPC. The function checks the caller's server-side admin
+role, validates the target and amount, updates the target's cloud-save balance and
+leaderboard points in one transaction, and writes an audit entry. Grants are limited to
+1–1,000,000 coins and the resulting balance cannot exceed 1,000,000,000.
+
+In the web Admin Console, the Coin Generator also asks the administrator to type
+`gambler` as a local confirmation. That phrase is only an extra UI check; it is not a
+secret and does not replace the database-side administrator check. Never put service-role
+or Supabase secret keys in the browser app.
