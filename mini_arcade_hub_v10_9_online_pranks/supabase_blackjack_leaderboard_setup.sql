@@ -1,5 +1,6 @@
--- Publish each player's saved Blackjack win count to their own leaderboard row.
--- Run AFTER supabase_setup.sql. The browser cannot choose a target user or a win count.
+-- Sync the signed-in player's saved Blackjack wins and point balance to their own leaderboard row.
+-- Run AFTER supabase_setup.sql. The browser cannot choose a target user or score values.
+-- This reads only the authenticated user's private player_saves row.
 
 create or replace function public.mini_arcade_sync_blackjack_wins()
 returns bigint
@@ -10,14 +11,16 @@ as $$
 declare
     v_user_id uuid := (select auth.uid());
     v_raw_wins text;
+    v_raw_points text;
     v_wins bigint;
 begin
     if v_user_id is null then
         raise exception 'Sign-in required';
     end if;
 
-    select s.save_data ->> 'blackjack_wins'
-      into v_raw_wins
+    select s.save_data ->> 'blackjack_wins',
+           s.save_data ->> 'balance'
+      into v_raw_wins, v_raw_points
     from public.player_saves s
     where s.user_id = v_user_id;
 
@@ -28,7 +31,13 @@ begin
     end if;
 
     update public.leaderboard
-       set blackjack_wins = v_wins
+       set blackjack_wins = v_wins,
+           points = case
+               when v_raw_points ~ '^[0-9]{1,10}$'
+                    and v_raw_points::bigint <= 1000000000
+               then v_raw_points::bigint
+               else points
+           end
      where user_id = v_user_id;
 
     if not found then
