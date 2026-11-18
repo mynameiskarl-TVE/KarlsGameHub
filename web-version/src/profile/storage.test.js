@@ -81,8 +81,8 @@ test("sanitizes Blackjack cosmetics and always retains the free starter designs"
       selectedDeck: "blue",
     },
   });
-  assert.deepEqual(profile.blackjackCosmetics.ownedTablecloths, ["burgundy", "classic-green"]);
-  assert.deepEqual(profile.blackjackCosmetics.ownedDecks, ["blue", "classic"]);
+  assert.deepEqual(profile.blackjackCosmetics.ownedTablecloths, ["classic-green", "burgundy"]);
+  assert.deepEqual(profile.blackjackCosmetics.ownedDecks, ["classic", "blue"]);
   assert.equal(profile.blackjackCosmetics.selectedTablecloth, "classic-green");
   assert.equal(profile.blackjackCosmetics.selectedDeck, "blue");
 });
