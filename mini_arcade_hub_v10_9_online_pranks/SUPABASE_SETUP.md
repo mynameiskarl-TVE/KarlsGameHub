@@ -178,3 +178,16 @@ In the web Admin Console, the Coin Generator also asks the administrator to type
 `gambler` as a local confirmation. That phrase is only an extra UI check; it is not a
 secret and does not replace the database-side administrator check. Never put service-role
 or Supabase secret keys in the browser app.
+
+
+## Blackjack wins on the web leaderboard
+
+Run `supabase_blackjack_leaderboard_setup.sql` in Supabase SQL Editor after
+`supabase_setup.sql`. This adds a narrowly scoped authenticated RPC that reads the
+signed-in player's saved `blackjack_wins` counter and updates only that player's
+leaderboard row. The web app calls it after uploading a cloud save, and the leaderboard
+now displays a **Blackjack wins** column.
+
+Existing players' counts will appear after they next save/sync their profile. This count
+comes from the player's saved game data, so it is useful for friendly standings but is
+not cheat-proof or server-verified gameplay.
