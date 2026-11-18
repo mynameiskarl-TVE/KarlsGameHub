@@ -20,6 +20,7 @@ export function normalizeLeaderboardRows(rows) {
     username: safeText(row?.username, 20, "player"),
     nickname: safeText(row?.nickname, 18, safeText(row?.username, 20, "Player")),
     points: safeCounter(row?.points),
+    blackjackWins: safeCounter(row?.blackjack_wins),
     triviaCorrect: safeCounter(row?.trivia_correct),
     updatedAt: typeof row?.updated_at === "string" ? row.updated_at : "",
   }));
@@ -34,7 +35,7 @@ export async function fetchLeaderboard(client, limit = 50) {
 
   const { data, error } = await client
     .from("leaderboard")
-    .select("username,nickname,points,trivia_correct,updated_at")
+    .select("username,nickname,points,blackjack_wins,trivia_correct,updated_at")
     .order("points", { ascending: false })
     .order("trivia_correct", { ascending: false })
     .limit(safeLimit);
