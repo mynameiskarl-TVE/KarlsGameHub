@@ -183,11 +183,14 @@ or Supabase secret keys in the browser app.
 ## Blackjack wins on the web leaderboard
 
 Run `supabase_blackjack_leaderboard_setup.sql` in Supabase SQL Editor after
-`supabase_setup.sql`. This adds a narrowly scoped authenticated RPC that reads the
-signed-in player's saved `blackjack_wins` counter and updates only that player's
-leaderboard row. The web app calls it after uploading a cloud save, and the leaderboard
-now displays a **Blackjack wins** column.
+`supabase_setup.sql`. You can safely rerun this file to update the existing RPC. It reads
+the signed-in player's saved `blackjack_wins` and `balance` values, then updates only
+that player's leaderboard row. The web app calls it after uploading a cloud save. This
+keeps leaderboard points aligned with the saved balance, including later coin-generator
+grants, and publishes the saved Blackjack win count.
 
-Existing players' counts will appear after they next save/sync their profile. This count
-comes from the player's saved game data, so it is useful for friendly standings but is
-not cheat-proof or server-verified gameplay.
+Existing players' counts and balances will sync after their next successful cloud save.
+If the local profile has newer progress than the cloud save, make sure the app reports a
+successful cloud save before relying on the leaderboard. These values come from player
+save data, so they are useful for friendly standings but are not cheat-proof or
+server-verified gameplay.
