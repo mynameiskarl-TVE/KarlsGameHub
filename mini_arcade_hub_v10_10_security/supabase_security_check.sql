@@ -26,6 +26,9 @@ from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public' and p.proname like 'mini_arcade%'
   and p.prorettype <> 'trigger'::regtype
+  -- These two are meant to be callable while signed out: the version-gate lookup, and the gate
+  -- itself (Supabase runs it as the signed-out role on every request).
+  and p.proname not in ('mini_arcade_client_requirements', 'mini_arcade_enforce_client_version')
   and has_function_privilege('anon', p.oid, 'execute')
 
 union all
@@ -47,6 +50,12 @@ select 'save write policy does not check suspension (run supabase_security_harde
 from pg_policies p
 where p.schemaname = 'public' and p.tablename = 'player_saves' and p.cmd in ('INSERT', 'UPDATE')
   and coalesce(p.with_check, '') not like '%mini_arcade_caller_is_suspended%'
+
+union all
+select 'players can reach the app version setting', 'mini_arcade_app_config'
+where to_regclass('public.mini_arcade_app_config') is not null
+  and (has_table_privilege('anon', 'public.mini_arcade_app_config', 'select,insert,update,delete')
+       or has_table_privilege('authenticated', 'public.mini_arcade_app_config', 'select,insert,update,delete'))
 
 union all
 select 'more than one owner exists', count(*)::text

@@ -10,6 +10,7 @@ import json
 import re
 
 from config import APP_DIR
+from version_check import client_headers
 
 CONFIG_FILE = APP_DIR / "supabase_config.json"
 USERNAME_PATTERN = re.compile(r"^[a-z0-9_]{3,20}$")
@@ -70,13 +71,17 @@ class UsernameAuth:
     def __init__(self):
         settings = load_supabase_settings()
         try:
-            from supabase import create_client
+            from supabase import ClientOptions, create_client
         except ImportError as exc:
             raise AuthSetupError(
                 "The Supabase Python package is missing. Open Command Prompt in the game "
                 "folder and run: pip install -r requirements.txt"
             ) from exc
-        self.client = create_client(settings["url"], settings["publishable_key"])
+        # Every request carries the game version so the server can refuse versions that are too old.
+        self.client = create_client(
+            settings["url"], settings["publishable_key"],
+            options=ClientOptions(headers=client_headers()),
+        )
 
     def register(self, username: str, password: str):
         username = normalize_username(username)

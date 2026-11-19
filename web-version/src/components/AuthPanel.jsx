@@ -137,7 +137,6 @@ export default function AuthPanel({
             <h2>{session.user.email?.split("@")[0] || "Player"}</h2>
             <p>Your Mini Arcade account is connected.</p>
             <div className="cloud-status" role="status" aria-live="polite">
-              <span className="cloud-status-dot" aria-hidden="true" />
               {cloudStatus}
             </div>
             <div className="account-button-row">

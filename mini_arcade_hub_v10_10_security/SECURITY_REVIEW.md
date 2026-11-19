@@ -27,6 +27,7 @@ Tested on a real local Postgres with stand-in Supabase roles: all scripts run in
 - Suspension is enforced by the server for cloud-save writes and leaderboard syncs, not only by the app.
 - The admin coin generator survives a corrupted save balance. Delegated admins can no longer add coins to their own account; the owner still can.
 - The website ships a Content-Security-Policy (GitHub Pages build only).
+- Minimum game version (`supabase_version_gate_setup.sql`, v10.10): every copy sends its version; the server refuses online requests (HTTP 426 `update_required`) from versions older than a minimum the owner sets in `mini_arcade_app_config`. It starts empty, so installing it blocks nobody. Tested on local Postgres (36 checks), with the real Supabase Python library against a fake server, and in a headless Tk window. The PostgREST wiring itself (`alter role authenticator set pgrst.db_pre_request`) and the browser sending the custom header were not testable outside a real Supabase project, so SUPABASE_SETUP.md has a test-then-rollback step. The version is reported by the player's computer: it stops honest old copies, not a determined cheater, and sign-in (a separate Supabase service) cannot be gated.
 - CI no longer regenerates `package-lock.json` or commits it back to `main`; the deploy fails if a shipped (non-dev) dependency has a high-severity advisory.
 
 ## Still open after v2

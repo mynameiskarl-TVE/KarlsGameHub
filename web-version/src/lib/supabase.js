@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { APP_VERSION, VERSION_HEADER, createVersionedFetch } from "./version.js";
 
 export const SUPABASE_CONFIG_KEY = "mini-arcade-hub.supabase-config.v1";
 
@@ -83,6 +84,11 @@ export function createSupabaseBrowserClient(config) {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
+    },
+    global: {
+      // Every request carries the game version so the server can refuse versions that are too old.
+      headers: { [VERSION_HEADER]: APP_VERSION },
+      fetch: createVersionedFetch((...args) => globalThis.fetch(...args)),
     },
   });
 }

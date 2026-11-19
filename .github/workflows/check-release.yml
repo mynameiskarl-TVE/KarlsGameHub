@@ -1,0 +1,25 @@
+name: Check release version
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Version, folder name, and docs agree
+        run: python tools/check_release.py
+      - name: Desktop version tests
+        run: |
+          cd mini_arcade_hub_v*/
+          python -m py_compile *.py
+          python -m unittest test_version_check -v

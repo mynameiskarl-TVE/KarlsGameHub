@@ -4,8 +4,9 @@ import {
   saveAudioSettings,
 } from "../settings/audio.js";
 
-const MUSIC_SOURCE =
-  "https://raw.githubusercontent.com/mynameiskarl-TVE/KarlsGameHub/main/mini_arcade_hub_v10_9_online_pranks/BeepBox-Song.mp3";
+// Served from this app's own files (web-version/public), so the music works offline in the
+// packaged apps and does not depend on a repository folder name that changes every release.
+const MUSIC_SOURCE = `${import.meta.env.BASE_URL}BeepBox-Song.mp3`;
 
 function readSettings() {
   try {

@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from cloud_save import fetch_my_status
+from version_check import is_update_required_error, update_required_text
 
 CHECK_INTERVAL_MS = 120_000  # re-check every 2 minutes so a suspension made mid-session shows up
 
@@ -56,8 +57,14 @@ class SuspensionMixin:
         def worker():
             try:
                 status = fetch_my_status(client)
-            except Exception:  # offline, or the server script has not been updated yet
+            except Exception as exc:  # offline, or the server script has not been updated yet
                 status = None
+                if is_update_required_error(exc):  # the minimum version was raised during this session
+                    notice = update_required_text(exc)
+                    try:
+                        self.root.after(0, lambda: self.handle_update_required(notice))
+                    except (tk.TclError, RuntimeError):
+                        pass
             try:
                 self.root.after(0, lambda: self._apply_suspension_status(status, generation))
             except (tk.TclError, RuntimeError):

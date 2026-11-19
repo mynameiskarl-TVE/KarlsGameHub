@@ -221,7 +221,6 @@
   border: 1px solid #35584d; border-radius: 9px; background: #203c34;
   color: #c2d4c9; font-size: 12px;
 }
-.save-indicator { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #9dbb8a; }
 .profile-storage-note { color: #8ea99b; font-size: 11px; line-height: 1.6; }
 
 @media (min-width: 761px) {
@@ -305,7 +304,6 @@
   padding: 12px; border: 1px solid #35584d; border-radius: 9px; background: #29473f;
   color: #d3e0d6; font-size: 12px; line-height: 1.5; text-align: left; overflow-wrap: anywhere;
 }
-.cloud-status-dot { width: 8px; height: 8px; flex: 0 0 8px; margin-top: 4px; border-radius: 50%; background: #a4be8c; }
 .account-button-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 15px; }
 .cloud-loading-screen {
   padding: 34px 18px; border: 1px solid #466b5b; border-radius: 14px;
@@ -1243,3 +1241,9 @@ footer { align-items: center; padding: 4px 2px 12px; color: #d0ded5; font-size: 
 .blackjack-cosmetic-card button:disabled { opacity:.45; cursor:not-allowed; }
 .blackjack-shop-message { color:#e6d49e; font-size:12px; margin:12px 0 0; }
 @media(max-width:520px) { .blackjack-customization-heading { flex-direction:column; } .blackjack-cosmetic-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Retro look: square corners everywhere, no glow/shadow polish.
+   The coin on the Coin Flip page stays round because it is a coin. */
+*, *::before, *::after { border-radius: 0 !important; }
+.coin-art, .coin-art::before, .coin-art::after { border-radius: 50% !important; }
+.rps-card, .trivia-card, .number-hunt-card, .profile-save-status, .number-hunt-mark, .number-hunt-balance { box-shadow: none !important; }

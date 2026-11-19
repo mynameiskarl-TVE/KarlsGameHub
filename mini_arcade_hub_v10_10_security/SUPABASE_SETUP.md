@@ -194,3 +194,36 @@ If the local profile has newer progress than the cloud save, make sure the app r
 successful cloud save before relying on the leaderboard. These values come from player
 save data, so they are useful for friendly standings but are not cheat-proof or
 server-verified gameplay.
+
+## Minimum game version (v10.10 update)
+
+This lets you stop OLD copies of the game from using online play, without rebuilding anything. It does not affect offline play.
+
+Do these steps in order. Do not skip step 1.
+
+1. **Put the new game out first.** Publish the new website (merge to `main` and wait for the green deploy) and give friends the new Windows build. Copies from before v10.10 do not send a version, so they are blocked as soon as you turn this on.
+2. Open https://supabase.com/dashboard, open your project, click **SQL Editor**, then **New query**.
+3. Paste in all of `supabase_security_hardening_v2.sql` (if you have not run it yet) and click **Run**. You should see "Success. No rows returned."
+4. Click **New query** again, paste in all of `supabase_version_gate_setup.sql`, click **Run**. You should see "Success. No rows returned." This installs the check but **nobody is blocked yet** (no minimum is set).
+5. Click **New query**, paste `supabase_security_check.sql`, click **Run**. **Healthy result: no rows.**
+6. Turn the check on. New query, paste this, click **Run**:
+
+   ```sql
+   update public.mini_arcade_app_config
+      set min_client_version = '10.10',
+          update_message = 'Please download the newest Mini Arcade Hub to keep playing online.',
+          updated_at = now()
+    where id = 1;
+   ```
+7. Test it: reload the website and sign in (it must still work). Start the new Windows build and sign in (must still work). If either shows "Update required" for itself, run the rollback below and send me what you saw.
+
+**Rollback (instant):**
+
+```sql
+update public.mini_arcade_app_config set min_client_version = null, updated_at = now() where id = 1;
+```
+
+**Next release:** when you want everyone on a newer version, change `'10.10'` to the new number in step 6. Use the Version in `config.py`. Numbers are compared part by part, so 10.10 is newer than 10.9.
+
+What old copies see: they get a generic "could not load" style error from their old code, because old code does not know about this. Copies from 10.10 on show a clear message. Anyone who edits their own copy can claim a newer version, so this stops honest old copies, not a determined cheater. Signing in itself cannot be blocked (it uses a separate Supabase service); old copies can sign in but cannot load or save anything.
+

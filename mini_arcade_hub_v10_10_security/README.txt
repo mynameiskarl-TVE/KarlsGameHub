@@ -1,4 +1,4 @@
-MINI ARCADE HUB v10.7 — ONLINE ACCOUNTS + ADMIN PRANKS + MUSIC
+MINI ARCADE HUB v10.10 — ONLINE ACCOUNTS + ADMIN PRANKS + MUSIC + SECURITY + VERSION CHECK
 
 Python 3.10+ / Windows / Tkinter. Supabase is optional; offline mode remains available.
 

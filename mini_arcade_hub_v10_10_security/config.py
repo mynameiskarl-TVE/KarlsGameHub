@@ -3,6 +3,13 @@ from pathlib import Path
 import hashlib
 import sys
 
+# The game version. This is the ONE place the desktop version is set. It must match
+# web-version/package.json and the release folder name (run tools/check_release.py).
+# It is shown in the window title and on screen, and sent to the server, which can refuse
+# online play for versions older than the minimum you set (see supabase_version_gate_setup.sql).
+APP_NAME = "Mini Arcade Hub"
+APP_VERSION = "10.10"
+
 # In a PyInstaller build, keep user-editable config and saves beside the EXE.
 # In a normal Python run, keep them beside the source files.
 if getattr(sys, "frozen", False):

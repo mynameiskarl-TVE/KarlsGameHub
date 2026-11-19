@@ -979,7 +979,6 @@ function App() {
             </div>
 
             <div className="profile-save-status" role="status" aria-live="polite">
-              <span className="save-indicator" aria-hidden="true" />
               {storageStatus}
             </div>
             <p className="profile-storage-note">

@@ -1,0 +1,11 @@
+# Never commit installed packages, build output, local saves, or a real Supabase config.
+node_modules/
+web-version/dist/
+web-version/release/
+__pycache__/
+*.py[cod]
+supabase_config.json
+local_saves/
+blackjack_save.json
+game_settings.json
+.venv/

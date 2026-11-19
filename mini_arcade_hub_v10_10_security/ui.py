@@ -49,6 +49,7 @@ class UIMixin:
             header.pack(fill="x")
             tk.Label(header, text="MINI ARCADE", font=("Segoe UI", 25, "bold"),
                      fg="#f1dfad", bg="#142b26").pack(side="left")
+            self.build_version_badge(header).pack(side="left", padx=(12, 0), pady=(16, 0))
             right = tk.Frame(header, bg="#142b26")
             right.pack(side="right")
             if self.current_user_id:

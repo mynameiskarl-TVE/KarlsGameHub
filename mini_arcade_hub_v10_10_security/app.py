@@ -1,7 +1,7 @@
 """Application class assembled from focused feature modules."""
 import sys
 import tkinter as tk
-from config import ICON_ICO, ICON_PNG
+from config import APP_NAME, ICON_ICO, ICON_PNG
 from player_data import default_save
 from ui import UIMixin
 from blackjack import BlackjackMixin
@@ -13,11 +13,13 @@ from leaderboard import LeaderboardMixin
 from suspension import SuspensionMixin
 from audio_settings import AudioSettingsMixin
 from prank_events import PrankEventsMixin
+from version_check import display_version
+from version_ui import VersionMixin
 
 
 class MiniArcade(
     UIMixin, BlackjackMixin, MinigamesMixin, PlayerMixin, AdminMixin, AccountUIMixin, LeaderboardMixin,
-    SuspensionMixin, AudioSettingsMixin, PrankEventsMixin,
+    SuspensionMixin, AudioSettingsMixin, PrankEventsMixin, VersionMixin,
 ):
     """Main app, composed from UI, account, player, and game feature modules."""
 
@@ -34,7 +36,7 @@ class MiniArcade(
 
     def __init__(self, root):
         self.root = root
-        root.title("Mini Arcade Hub")
+        root.title(f"{APP_NAME} v{display_version()}")
         root.geometry("960x760")
         root.minsize(800, 650)
         root.configure(bg="#142b26")

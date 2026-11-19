@@ -25,6 +25,7 @@ class AccountUIMixin:
             self.auth_frame, text="MINI ARCADE", font=("Segoe UI", 27, "bold"),
             fg="#f1dfad", bg="#142b26",
         ).pack(pady=(25, 4))
+        self.build_version_badge(self.auth_frame).pack(pady=(0, 8))
         tk.Label(
             self.auth_frame, text="Sign in to load your player profile and cloud save.",
             font=("Segoe UI", 10), fg="#c2d4c9", bg="#142b26",
@@ -82,6 +83,7 @@ class AccountUIMixin:
             bottom, text="Supabase setup guide", command=self.open_setup_guide,
             relief="flat", bg="#29473f", fg="#f6f0dd", padx=16, pady=8,
         ).pack(side="left", padx=5)
+        self.start_version_check()
 
     def show_account_form(self, mode: str):
         self.auth_mode = mode
@@ -123,6 +125,7 @@ class AccountUIMixin:
         )
         self.auth_action_button.pack(fill="x", pady=(4, 0))
         self.username_entry.focus_set()
+        self._show_online_block()  # no-op unless this copy is too old for online play
 
     def _account_request_started(self, message: str):
         self.auth_notice.config(text=message, fg="#e7d9ae")
@@ -132,6 +135,7 @@ class AccountUIMixin:
     def _account_request_finished(self):
         if hasattr(self, "auth_action_button") and self.auth_action_button.winfo_exists():
             self.auth_action_button.config(state="normal")
+        self._show_online_block()
 
     def _get_auth_service(self):
         if self.account_service is None:
