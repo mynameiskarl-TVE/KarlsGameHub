@@ -1,27 +1,30 @@
 """Arcade tab and the non-Blackjack minigames."""
 import random
+import threading
+import time
 import tkinter as tk
 from tkinter import messagebox, ttk
 import slots
 from config import MAX_BALANCE, MAX_FLIP_BET, MAX_SLOT_BET
+from trivia_daily import (
+    TRIVIA_MAX_BET, fetch_status, format_countdown, pick_questions, start_game,
+    trivia_payout, validate_bet,
+)
+from version_check import is_update_required_error, update_required_text
 
 class MinigamesMixin:
     """Methods for Coin Flip, Number Hunt, RPS, Trivia, and the Slot Machine."""
 
-    TRIVIA = [
-            ("Which planet is known as the Red Planet?", ["Venus", "Mars", "Jupiter", "Mercury"], 1),
-            ("How many sides does a hexagon have?", ["Five", "Six", "Seven", "Eight"], 1),
-            ("What is the largest ocean on Earth?", ["Atlantic", "Indian", "Pacific", "Arctic"], 2),
-            ("Which animal is the largest living land animal?", ["Giraffe", "Hippo", "African elephant", "Rhino"], 2),
-            ("What is H2O commonly called?", ["Oxygen", "Hydrogen", "Salt", "Water"], 3),
-            ("How many minutes are in two hours?", ["90", "100", "120", "140"], 2),
-            ("Which instrument usually has 88 keys?", ["Violin", "Piano", "Flute", "Trumpet"], 1),
-            ("What is the process plants use to make food from sunlight?", ["Evaporation", "Photosynthesis", "Digestion", "Condensation"], 1),
-            ("Which is the closest star to Earth?", ["Sirius", "Polaris", "The Sun", "Vega"], 2),
-            ("What is 9 × 7?", ["56", "63", "72", "79"], 1),
-            ("Which continent is the Sahara Desert in?", ["Asia", "Africa", "Australia", "South America"], 1),
-            ("What do bees collect from flowers?", ["Nectar", "Sand", "Bark", "Dew only"], 0),
-        ]
+    # Trivia questions, bets and the daily limit live in trivia_daily.py (25 questions, one game a day,
+    # decided by the server's clock).
+    _trivia_generation = 0
+    _trivia_busy = False
+    _trivia_state = None        # last answer from the server: {"can_play": bool, ...}, or None while unknown
+    _trivia_clock = (0, 0.0)    # (seconds the server said remain, time.monotonic() when it said so)
+    _trivia_job = None
+    _trivia_error = ""
+    _quiz_answered = False
+    trivia_bet = 0
 
     def make_scrollable_area(self, parent, bg):
             """A frame that stretches to fill the tab, and scrolls instead of clipping when the window is small."""
@@ -123,14 +126,130 @@ class MinigamesMixin:
             return card
 
     def build_trivia_card(self, parent):
-            card = self.make_card(parent, "QUICK TRIVIA", "Answer five questions. Earn points for each correct answer.")
-            self.trivia_question = self.label(card, "Start a quiz when you're ready.", size=9, color="#f0e3bd", bg="#203c34", wraplength=350, justify="left")
-            self.trivia_question.pack(anchor="w", pady=4)
-            self.trivia_options = tk.Frame(card, bg="#203c34")
-            self.trivia_options.pack(anchor="w", fill="x")
-            self.trivia_start_btn = self.button(card, "Start quiz", self.start_quiz, True)
-            self.trivia_start_btn.pack(anchor="w", pady=(7, 0))
-            return card
+        card = self.make_card(parent, "QUICK TRIVIA",
+                              f"One quiz a day. Optional bet up to {TRIVIA_MAX_BET:,} points (0 = no bet).")
+        self._trivia_generation += 1
+        self._trivia_busy = False
+        self._trivia_state = None
+        self._trivia_error = ""
+        self._trivia_job = None
+        self.trivia_question = self.label(card, "Start a quiz when you're ready.", size=9, color="#f0e3bd", bg="#203c34", wraplength=350, justify="left")
+        self.trivia_question.pack(anchor="w", pady=4)
+        self.trivia_options = tk.Frame(card, bg="#203c34")
+        self.trivia_options.pack(anchor="w", fill="x")
+        self.trivia_status = self.label(card, "", size=9, color="#e7d9ae", bg="#203c34", wraplength=350, justify="left")
+        self.trivia_status.pack(anchor="w", pady=(2, 0))
+        bet_row = tk.Frame(card, bg="#203c34")
+        bet_row.pack(anchor="w", pady=(6, 0))
+        self.label(bet_row, "Bet:", bg="#203c34").pack(side="left", padx=(0, 6))
+        self.trivia_bet_entry = tk.Entry(bet_row, width=8, justify="center")
+        self.trivia_bet_entry.insert(0, "0")
+        self.trivia_bet_entry.pack(side="left", padx=(0, 6))
+        self.button(bet_row, "Max", self._set_max_trivia_bet).pack(side="left")
+        self.label(card, "5 correct pays 3x, 4 pays 2x, 3 returns your bet, 2 returns half, 0-1 loses it. "
+                         "No bet: points for each correct answer.",
+                   size=8, color="#c2d4c9", bg="#203c34", wraplength=350, justify="left").pack(anchor="w", pady=(4, 0))
+        self.trivia_start_btn = self.button(card, "Start quiz", self.start_quiz, True)
+        self.trivia_start_btn.pack(anchor="w", pady=(7, 0))
+        self.render_trivia_panel()
+        self.refresh_trivia_status()
+        return card
+
+    def _set_max_trivia_bet(self):
+        self.trivia_bet_entry.delete(0, "end")
+        self.trivia_bet_entry.insert(0, str(max(0, min(TRIVIA_MAX_BET, self.balance))))
+
+    def _trivia_online(self):
+        return bool(self.online_mode and self.account_service)
+
+    def _trivia_seconds_left(self):
+        seconds, at = self._trivia_clock
+        # time.monotonic() ignores changes to the computer's date and time, so setting the clock
+        # forward cannot shorten the wait.
+        return max(0, int(seconds - (time.monotonic() - at)))
+
+    def render_trivia_panel(self):
+        """Show the right message and enable the Start button only when the server says today's game is free."""
+        if not hasattr(self, "trivia_start_btn") or not self.trivia_start_btn.winfo_exists():
+            return
+        if not self._trivia_online():
+            text, can_start = "Sign in to play Trivia. It can be played once a day, and the server keeps track of the day.", False
+        elif self.quiz_active:
+            text, can_start = "", False
+        elif self._trivia_busy:
+            text, can_start = "Checking with the server...", False
+        elif self._trivia_error:
+            text, can_start = self._trivia_error, False
+        elif self._trivia_state is None:
+            text, can_start = "Checking today's game...", False
+        elif self._trivia_state["can_play"]:
+            text, can_start = "Today's game is available.", True
+        else:
+            text, can_start = (f"You have played Trivia today. Next game in "
+                               f"{format_countdown(self._trivia_seconds_left())}."), False
+        self.trivia_status.config(text=text)
+        self.trivia_start_btn.config(state="normal" if can_start else "disabled")
+
+    def refresh_trivia_status(self):
+        """Ask the server (off the UI thread) whether today's game is available."""
+        if not self._trivia_online():
+            self.render_trivia_panel()
+            return
+        generation = self._trivia_generation
+        client = self.account_service.client
+
+        def worker():
+            try:
+                state, error = fetch_status(client), None
+            except Exception as exc:  # offline, suspended, or supabase_trivia_daily_setup.sql not run yet
+                state, error = None, exc
+            try:
+                self.root.after(0, lambda: self._apply_trivia_status(state, error, generation))
+            except (tk.TclError, RuntimeError):
+                pass
+
+        threading.Thread(target=worker, name="MiniArcadeTriviaStatus", daemon=True).start()
+
+    def _apply_trivia_status(self, state, error, generation):
+        if generation != self._trivia_generation:
+            return  # signed out, or a different account, since this check began
+        if error is not None:
+            if is_update_required_error(error):
+                self.handle_update_required(update_required_text(error))
+            self._trivia_error = "Could not check today's game: " + " ".join(str(getattr(error, "message", "") or error).split())[:160]
+            self._trivia_state = None
+        else:
+            self._trivia_error = ""
+            self._apply_trivia_state(state)
+        self.render_trivia_panel()
+
+    def _apply_trivia_state(self, state):
+        self._trivia_state = state
+        self._trivia_clock = (state["seconds_until_reset"], time.monotonic())
+        self._schedule_trivia_tick()
+
+    def _schedule_trivia_tick(self):
+        if self._trivia_job is not None:
+            try:
+                self.root.after_cancel(self._trivia_job)
+            except tk.TclError:
+                pass
+            self._trivia_job = None
+        if self._trivia_state is None or self._trivia_state["can_play"]:
+            return
+        generation = self._trivia_generation
+
+        def tick():
+            self._trivia_job = None
+            if generation != self._trivia_generation or not self._trivia_online():
+                return  # signed out, or the card was rebuilt
+            self.render_trivia_panel()
+            if self._trivia_seconds_left() <= 0:
+                self.refresh_trivia_status()  # the server decides when the new day has started
+            else:
+                self._trivia_job = self.root.after(1000, tick)
+
+        self._trivia_job = self.root.after(1000, tick)
 
     SLOT_COLORS = {"7": "#c62828", "BAR": "#1d2b26", "\u2666": "#c62828", "\u2665": "#c62828",
                    "\u2663": "#1d2b26", "\u2660": "#1d2b26"}
@@ -308,46 +427,119 @@ class MinigamesMixin:
             self.log_event("Rock Paper Scissors: " + result)
 
     def start_quiz(self):
-            self.quiz_questions = random.sample(self.TRIVIA, 5)
-            self.quiz_index = 0
-            self.quiz_score = 0
-            self.quiz_active = True
-            self.data["trivia_games"] += 1
-            self.trivia_start_btn.config(state="disabled")
-            self.show_quiz_question()
+        if self.quiz_active or self._trivia_busy:
+            return
+        if not self._trivia_online():
+            self.render_trivia_panel()
+            return
+        try:
+            bet = validate_bet(self.trivia_bet_entry.get(), self.balance)
+        except ValueError as exc:
+            messagebox.showinfo("Trivia bet", str(exc), parent=self.root)
+            return
+
+        # The server uses up today's game first. Only if it says yes do we take the bet and start.
+        self._trivia_busy = True
+        self.render_trivia_panel()
+        generation = self._trivia_generation
+        client = self.account_service.client
+
+        def worker():
+            try:
+                result, error = start_game(client, bet), None
+            except Exception as exc:
+                result, error = None, exc
+            try:
+                self.root.after(0, lambda: self._finish_trivia_start(result, error, bet, generation))
+            except (tk.TclError, RuntimeError):
+                pass
+
+        threading.Thread(target=worker, name="MiniArcadeTriviaStart", daemon=True).start()
+
+    def _finish_trivia_start(self, result, error, bet, generation):
+        if generation != self._trivia_generation:
+            return
+        self._trivia_busy = False
+        if error is not None:
+            if is_update_required_error(error):
+                self.handle_update_required(update_required_text(error))
+            # Nothing was used up on the server, so the player can simply try again.
+            self._trivia_error = ""
+            self.render_trivia_panel()
+            messagebox.showwarning(
+                "Trivia", "Trivia could not start, and today's game was not used up.\n\n"
+                + " ".join(str(getattr(error, "message", "") or error).split())[:200], parent=self.root)
+            return
+        self._apply_trivia_state(result)
+        if not result["ok"]:
+            self.render_trivia_panel()
+            messagebox.showinfo("Trivia", "You have already played Trivia today.", parent=self.root)
+            return
+
+        stake = bet
+        if stake > self.balance:  # the balance dropped while we were asking the server
+            stake = 0
+            messagebox.showinfo("Trivia", "Your balance changed, so this game is played without a bet.", parent=self.root)
+        self.trivia_bet = stake
+        self.balance -= stake
+        self.quiz_questions = pick_questions()
+        self.quiz_index = 0
+        self.quiz_score = 0
+        self.quiz_active = True
+        self.data["trivia_games"] += 1
+        self.render_trivia_panel()
+        if stake:
+            self.set_status(f"Trivia: you bet {stake:,} points.")
+        self.show_quiz_question()
 
     def show_quiz_question(self):
-            for child in self.trivia_options.winfo_children():
-                child.destroy()
-            if self.quiz_index >= len(self.quiz_questions):
+        self._quiz_answered = False
+        for child in self.trivia_options.winfo_children():
+            child.destroy()
+        if self.quiz_index >= len(self.quiz_questions):
+            if self.trivia_bet:
+                payout = trivia_payout(self.trivia_bet, self.quiz_score)
+                self.balance += payout
+                net = payout - self.trivia_bet
+                msg = (f"Quiz complete: {self.quiz_score}/5 correct. Bet {self.trivia_bet:,}, paid back {payout:,} "
+                       f"({'+' if net >= 0 else '-'}{abs(net):,}).")
+            else:
                 bonus = 10 if self.quiz_score == 5 else 0
                 self.balance += bonus
                 msg = f"Quiz complete: {self.quiz_score}/5 correct. Bonus: +{bonus}."
-                self.trivia_question.config(text=msg)
-                self.quiz_active = False
-                self.trivia_start_btn.config(state="normal")
-                self.set_status(msg)
-                self.log_event(f"Trivia finished {self.quiz_score}/5")
-                return
-            question, options, answer = self.quiz_questions[self.quiz_index]
-            self.trivia_question.config(text=f"Question {self.quiz_index + 1}/5: {question}")
-            for index, option in enumerate(options):
-                self.button(self.trivia_options, option,
-                            lambda i=index: self.answer_quiz(i), False).pack(anchor="w", fill="x", pady=2)
+            self.trivia_question.config(text=msg)
+            self.quiz_active = False
+            self.render_trivia_panel()
+            self.set_status(msg)
+            self.log_event(f"Trivia finished {self.quiz_score}/5" + (f", bet {self.trivia_bet}" if self.trivia_bet else ""))
+            self.trivia_bet = 0
+            return
+        question, options, answer = self.quiz_questions[self.quiz_index]
+        self.trivia_question.config(text=f"Question {self.quiz_index + 1}/5: {question}")
+        for index, option in enumerate(options):
+            self.button(self.trivia_options, option,
+                        lambda i=index: self.answer_quiz(i), False).pack(anchor="w", fill="x", pady=2)
 
     def answer_quiz(self, choice):
-            if not self.quiz_active:
-                return
-            question, options, correct = self.quiz_questions[self.quiz_index]
-            if choice == correct:
+        # One answer per question: a double-click must not score twice or skip ahead.
+        if not self.quiz_active or self._quiz_answered or self.quiz_index >= len(self.quiz_questions):
+            return
+        self._quiz_answered = True
+        question, options, correct = self.quiz_questions[self.quiz_index]
+        if choice == correct:
+            self.quiz_score += 1
+            self.data["trivia_correct"] += 1
+            if self.trivia_bet:
+                message = "Correct!"  # with a bet, the payout comes at the end
+            else:
                 reward = self.data["trivia_reward"]
-                self.quiz_score += 1
-                self.data["trivia_correct"] += 1
                 self.balance += reward
                 message = f"Correct! +{reward} points."
-            else:
-                message = f"Not quite — the answer was {options[correct]}."
-            self.trivia_question.config(text=message)
-            self.quiz_index += 1
-            self.root.after(850, self.show_quiz_question)
-            self.set_status(message)
+        else:
+            message = f"Not quite — the answer was {options[correct]}."
+        self.trivia_question.config(text=message)
+        self.quiz_index += 1
+        for child in self.trivia_options.winfo_children():
+            child.destroy()  # no double-clicking an answer while the result is showing
+        self.root.after(850, self.show_quiz_question)
+        self.set_status(message)

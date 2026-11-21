@@ -39,8 +39,8 @@ Version format: `MAJOR.MINOR` (for example `10.10`). Compare numbers part by par
 Normally raise MINOR by one. Ask the owner before raising MAJOR.
 
 Naming (all three must agree):
-- Project folder: `mini_arcade_hub_v<MAJOR>_<MINOR>_<tag>` e.g. `mini_arcade_hub_v10_10_security`
-- Release ZIP: the same name plus `.zip`, e.g. `mini_arcade_hub_v10_10_security.zip`
+- Project folder: `mini_arcade_hub_v<MAJOR>_<MINOR>_<tag>` e.g. `mini_arcade_hub_v10_11_trivia_daily`
+- Release ZIP: the same name plus `.zip`, e.g. `mini_arcade_hub_v10_11_trivia_daily.zip`
 - `<tag>` is a short lowercase description of the release (letters, digits, underscores), e.g. `security`, `blackjack_split`.
 
 When you bump the version, update ALL of these (the checker verifies them):
@@ -91,7 +91,7 @@ Rules for raising it:
 
 ## Deliverables every time
 - Run a syntax check and the relevant tests, and say exactly what you ran:
-  - Desktop (from the versioned folder): `python -m py_compile *.py` and `python -m unittest test_version_check -v`
+  - Desktop (from the versioned folder): `python -m py_compile *.py` and `python -m unittest test_version_check test_trivia_daily -v`
   - Web (from `web-version`): `npm test` and `npm run build`
   - Release: `python tools/check_release.py`
   - SQL: test on a real Postgres when you can; the owner runs `supabase_security_check.sql` (healthy result: no rows).

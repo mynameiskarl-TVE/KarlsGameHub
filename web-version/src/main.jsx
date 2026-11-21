@@ -882,7 +882,7 @@ function App() {
             <div className="game-grid arcade-game-grid">
               {gameCard("Number Hunt", "Find the secret number in five guesses", "Number Hunt")}
               {gameCard("Rock Paper Scissors", "Play against the computer", "Rock Paper Scissors")}
-              {gameCard("Quick Trivia", "Answer five randomly selected questions", "Trivia")}
+              {gameCard("Quick Trivia", "One quiz a day: five random questions, with an optional bet", "Trivia")}
               {gameCard("Memory Match", "Find all matching pairs", "Memory Match")}
               {gameCard("Pattern Recall", "Remember and repeat the sequence", "Pattern Recall")}
               {gameCard("Coin Flip", "Call Heads or Tails", "Coin Flip")}
@@ -913,7 +913,7 @@ function App() {
           {isCloudLoading ? (
             <div className="cloud-loading-screen" role="status">{cloudStatus}</div>
           ) : (
-            <TriviaGame balance={balance} onSpendPoints={spendPoints} onEarnPoints={awardPoints} onGameResult={recordGameResult} rewardPerCorrect={profile.triviaReward} />
+            <TriviaGame balance={balance} onSpendPoints={spendPoints} onEarnPoints={awardPoints} onGameResult={recordGameResult} rewardPerCorrect={profile.triviaReward} client={supabaseClient} signedIn={Boolean(session?.user?.id) && !moderationStatus.suspended} visible={active === "Trivia"} />
           )}
         </div>
         <div hidden={active !== "Memory Match"}>

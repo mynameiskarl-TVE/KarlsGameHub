@@ -58,6 +58,12 @@ where to_regclass('public.mini_arcade_app_config') is not null
        or has_table_privilege('authenticated', 'public.mini_arcade_app_config', 'select,insert,update,delete'))
 
 union all
+select 'players can reach the daily Trivia table directly', 'mini_arcade_trivia_plays'
+where to_regclass('public.mini_arcade_trivia_plays') is not null
+  and (has_table_privilege('anon', 'public.mini_arcade_trivia_plays', 'select,insert,update,delete')
+       or has_table_privilege('authenticated', 'public.mini_arcade_trivia_plays', 'select,insert,update,delete'))
+
+union all
 select 'more than one owner exists', count(*)::text
 from public.mini_arcade_admin_roles
 where role = 'owner'

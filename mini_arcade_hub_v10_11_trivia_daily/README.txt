@@ -1,4 +1,4 @@
-MINI ARCADE HUB v10.10 — ONLINE ACCOUNTS + ADMIN PRANKS + MUSIC + SECURITY + VERSION CHECK
+MINI ARCADE HUB v10.11 — ONLINE ACCOUNTS + ADMIN PRANKS + MUSIC + SECURITY + VERSION CHECK + DAILY TRIVIA
 
 Python 3.10+ / Windows / Tkinter. Supabase is optional; offline mode remains available.
 
@@ -30,6 +30,8 @@ PROJECT FILE GUIDE
 - blackjack.py — Blackjack UI, rules, split, double down, and round logic.
 - minigames.py — Coin Flip, Number Hunt, Rock Paper Scissors, Trivia, and the Slot Machine.
 - slots.py — Slot Machine rules and payouts (no UI).
+- trivia_daily.py — Trivia rules: the 25-question bank, bets (max 2,500), payouts, and the server-checked one-game-a-day limit.
+- supabase_trivia_daily_setup.sql — server side of the daily Trivia limit and maximum bet (run it; see SUPABASE_SETUP.md).
 - icon.ico / icon.png — the Karl Games icon.
 - BeepBox-Song.mp3 — looping background music used by the game.
 - audio_settings.py — music playback, settings window, and saved volume preferences. create_shortcuts.bat makes icon shortcuts for the .bat files.

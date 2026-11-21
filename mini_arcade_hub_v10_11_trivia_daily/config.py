@@ -8,7 +8,7 @@ import sys
 # It is shown in the window title and on screen, and sent to the server, which can refuse
 # online play for versions older than the minimum you set (see supabase_version_gate_setup.sql).
 APP_NAME = "Mini Arcade Hub"
-APP_VERSION = "10.10"
+APP_VERSION = "10.11"
 
 # In a PyInstaller build, keep user-editable config and saves beside the EXE.
 # In a normal Python run, keep them beside the source files.

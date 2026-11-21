@@ -227,3 +227,17 @@ update public.mini_arcade_app_config set min_client_version = null, updated_at =
 
 What old copies see: they get a generic "could not load" style error from their old code, because old code does not know about this. Copies from 10.10 on show a clear message. Anyone who edits their own copy can claim a newer version, so this stops honest old copies, not a determined cheater. Signing in itself cannot be blocked (it uses a separate Supabase service); old copies can sign in but cannot load or save anything.
 
+## Daily Trivia (v10.11 update)
+
+Trivia can be played once a day. The server decides what day it is, so changing the clock on a computer or phone does not help, and playing from a second device does not give a second game. The server also refuses a bet above 2,500.
+
+1. Open https://supabase.com/dashboard, open your project, click **SQL Editor**, then **New query**.
+2. Paste in all of `supabase_trivia_daily_setup.sql` and click **Run**. You should see "Success. No rows returned." It is safe to run again. It needs `supabase_moderation_setup.sql` and `supabase_security_hardening_v2.sql` to have been run already.
+3. Click **New query**, paste `supabase_security_check.sql`, click **Run**. **Healthy result: no rows.**
+4. Test it: sign in on the website, open Quick Trivia, and start a quiz with a bet of 0. Close it, reload the page: Trivia should now say you have played today and show a countdown. (To play again while testing, run this in the SQL Editor, which gives you the day back: `delete from public.mini_arcade_trivia_plays;`)
+
+When does the day change? At midnight UTC (4 PM or 5 PM in California). To use another timezone, open `supabase_trivia_daily_setup.sql`, change `'UTC'` in `mini_arcade_trivia_reset_timezone()` (for example to `'America/Los_Angeles'` for midnight Pacific time), and run the file again.
+
+To see who played today: `select u.email, p.bet, p.started_at from public.mini_arcade_trivia_plays p join auth.users u on u.id = p.user_id where p.play_day = (now() at time zone 'UTC')::date;`
+
+Honest limits: the server decides WHEN a game may start and records the bet it was told. It does not see the questions, answers or payout, and it does not check the bet against the player's balance; those live on the player's own device like every other game here. A game counts as played the moment it starts, so closing the game halfway does not give the day back. Players on versions before 10.11 can still use the old trivia (they never ask the server), so raise the minimum version (see "Minimum game version") once friends have updated.

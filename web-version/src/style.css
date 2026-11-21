@@ -159,6 +159,15 @@
 .trivia-complete > p { color: #c2d4c9; line-height: 1.5; }
 .trivia-earned { color: #f1dfad !important; font-weight: 800; }
 .trivia-balance-note { margin: 14px 0 0; color: #8ea99b; text-align: center; font-size: 12px; }
+.trivia-bet { display: grid; gap: 8px; max-width: 360px; margin: 0 auto 14px; text-align: left; }
+.trivia-bet label { color: #a9c1b3; font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+.trivia-bet input { padding: 10px 12px; border: 1px solid #466b5b; border-radius: 8px; background: #152f27; color: #f6f0dd; font-size: 16px; }
+.trivia-bet input:focus-visible, .trivia-bet-quick button:focus-visible { outline: 2px solid #e5cf91; outline-offset: 2px; }
+.trivia-bet-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.trivia-bet-quick button { padding: 7px 12px; border: 1px solid #466b5b; border-radius: 8px; background: #203c34; color: #f0e3bd; font-size: 12px; font-weight: 800; cursor: pointer; }
+.trivia-bet-quick button:hover { border-color: #e5cf91; background: #31594c; }
+.trivia-primary:disabled { opacity: .5; cursor: not-allowed; }
+.trivia-notice { margin: 14px 0 0; color: #f1dfad; font-size: 13px; text-align: center; }
 
 @media (max-width: 760px) {
   .rps-heading, .trivia-heading { align-items: flex-start; flex-direction: column; gap: 12px; }

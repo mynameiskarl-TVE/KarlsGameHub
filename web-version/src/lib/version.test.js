@@ -48,7 +48,7 @@ test("display trims a trailing .0 patch", () => {
 test("package.json is the version source and matches the desktop version", () => {
   const pkg = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
   assert.ok(parseVersion(pkg.version), "package.json version must be a plain version");
-  const config = readFileSync(new URL("../../../mini_arcade_hub_v10_10_security/config.py", import.meta.url), "utf8");
+  const config = readFileSync(new URL("../../../mini_arcade_hub_v10_11_trivia_daily/config.py", import.meta.url), "utf8");
   const desktop = /APP_VERSION\s*=\s*"([^"]+)"/.exec(config)?.[1];
   assert.deepEqual(parseVersion(pkg.version), parseVersion(desktop), "web and desktop versions must match");
 });

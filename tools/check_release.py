@@ -5,14 +5,14 @@
     python tools/check_release.py --zip FILE.zip  # also check a release ZIP
 
 The release version lives in the NAME of the project folder:
-    mini_arcade_hub_v<MAJOR>_<MINOR>_<tag>      e.g. mini_arcade_hub_v10_10_security  = version 10.10
+    mini_arcade_hub_v<MAJOR>_<MINOR>_<tag>      e.g. mini_arcade_hub_v10_11_trivia_daily  = version 10.11
 
 and must agree with:
-    <folder>/config.py            APP_VERSION = "10.10"
-    web-version/package.json      "version": "10.10.0"   (and the same in package-lock.json)
-    <folder>/README.txt           first line mentions v10.10
-    <folder>/RELEASE_README.txt   has a "Version 10.10" entry
-    the ZIP name                  mini_arcade_hub_v10_10_security.zip
+    <folder>/config.py            APP_VERSION = "10.11"
+    web-version/package.json      "version": "10.11.0"   (and the same in package-lock.json)
+    <folder>/README.txt           first line mentions v10.11
+    <folder>/RELEASE_README.txt   has a "Version 10.11" entry
+    the ZIP name                  mini_arcade_hub_v10_11_trivia_daily.zip
 
 It exits with a non-zero code and lists every problem if anything disagrees.
 """

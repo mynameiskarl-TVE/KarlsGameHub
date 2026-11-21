@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the release ZIP, named after the version folder, after checking everything agrees.
 
-    python tools/make_release_zip.py            # writes mini_arcade_hub_v10_10_security.zip in the current folder
+    python tools/make_release_zip.py            # writes mini_arcade_hub_v10_11_trivia_daily.zip in the current folder
     python tools/make_release_zip.py --out DIR
 
 The ZIP holds the whole project laid out exactly like the GitHub repository (so it can be copied

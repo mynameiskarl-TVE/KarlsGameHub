@@ -22,4 +22,4 @@ jobs:
         run: |
           cd mini_arcade_hub_v*/
           python -m py_compile *.py
-          python -m unittest test_version_check -v
+          python -m unittest test_version_check test_trivia_daily -v
